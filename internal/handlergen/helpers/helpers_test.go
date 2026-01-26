@@ -30,32 +30,6 @@ type testResponse struct {
 	Message string
 }
 
-func TestExpectOptions(t *testing.T) {
-	t.Run("default options", func(t *testing.T) {
-		opts := buildOpts(nil)
-		assert.Equal(t, 1, opts.times)
-		assert.Nil(t, opts.error)
-	})
-
-	t.Run("Times option", func(t *testing.T) {
-		opts := buildOpts([]ExpectOption{Times(5)})
-		assert.Equal(t, 5, opts.times)
-	})
-
-	t.Run("WithError option", func(t *testing.T) {
-		testErr := errors.New("test error")
-		opts := buildOpts([]ExpectOption{WithError(testErr)})
-		assert.Equal(t, testErr, opts.error)
-	})
-
-	t.Run("multiple options", func(t *testing.T) {
-		testErr := errors.New("test error")
-		opts := buildOpts([]ExpectOption{Times(3), WithError(testErr)})
-		assert.Equal(t, 3, opts.times)
-		assert.Equal(t, testErr, opts.error)
-	})
-}
-
 func TestKeyHash(t *testing.T) {
 	t.Run("same request produces same hash", func(t *testing.T) {
 		req1 := testRequest{

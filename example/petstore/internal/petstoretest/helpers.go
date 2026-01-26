@@ -18,16 +18,6 @@ type expectOpts struct {
 
 type ExpectOption func(*expectOpts)
 
-func buildOpts(opts []ExpectOption) expectOpts {
-	options := expectOpts{
-		times: 1,
-	}
-	for _, o := range opts {
-		o(&options)
-	}
-	return options
-}
-
 func Times(n int) ExpectOption {
 	return func(o *expectOpts) {
 		o.times = n
@@ -48,6 +38,8 @@ func keyHash(req any) string {
 	h := fnv.New128()
 	err := json.NewEncoder(h).Encode(req)
 	if err != nil {
+		// if encoding fails, panic as this indicates a programming error, not a runtime error
+		// specifically it means our assumption about the request type is wrong
 		panic("hash write failed: " + err.Error())
 	}
 	return hex.EncodeToString(h.Sum(nil))
