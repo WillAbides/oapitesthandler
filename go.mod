@@ -1,4 +1,4 @@
-module github.com/willabides/goproject-tmpl
+module github.com/willabides/oapitesthandler
 
 go 1.24.0
 
