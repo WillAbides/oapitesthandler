@@ -1,9 +1,8 @@
 package main
 
 import (
-	"fmt"
-
 	"github.com/alecthomas/kong"
+	"github.com/willabides/oapitesthandler/internal/handlergen"
 )
 
 var version = "unknown"
@@ -11,6 +10,9 @@ var version = "unknown"
 const description = `` // add description here
 
 type cmdRoot struct {
+	Config  string           `kong:"short='c',required,help='Path to oapi-codegen config YAML file'"`
+	Out     string           `kong:"short='o',required,help='Directory to write the generated test handler to'"`
+	Spec    string           `kong:"arg,help='Path to OpenAPI spec YAML file'"`
 	Version kong.VersionFlag `kong:"help=${VersionHelp}"`
 }
 
@@ -26,6 +28,6 @@ func main() {
 		kong.Description(description),
 	)
 
-	//nolint:errcheck // stdout
-	_, _ = fmt.Fprintln(k.Stdout, "hello, world")
+	err := handlergen.Run(cli.Spec, cli.Config, cli.Out)
+	k.FatalIfErrorf(err)
 }

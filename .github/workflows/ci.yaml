@@ -36,12 +36,10 @@ jobs:
       - uses: WillAbides/release-train@v3.3.0
         id: release-train
         with:
-          # set create-release: true when ready to start releasing
-          create-release: false
+          create-release: true
           release-refs: main
           pre-tag-hook: script/release-hook
 
-      # This can be deleted if this repo isn't going to publish a binary
       - name: add bindown template
         env:
           RELEASE_TAG: ${{ steps.release-train.outputs.release-tag }}
