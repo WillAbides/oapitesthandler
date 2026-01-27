@@ -84,7 +84,7 @@ type OrderStatus string
 // Pet defines model for Pet.
 type Pet struct {
 	Category  *Category `json:"category,omitempty"`
-	Id        *int64    `json:"id,omitempty"`
+	Id        *int32    `json:"id,omitempty"`
 	Name      string    `json:"name"`
 	PhotoUrls []string  `json:"photoUrls"`
 

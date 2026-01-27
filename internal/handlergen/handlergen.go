@@ -12,6 +12,7 @@ import (
 
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/oapi-codegen/oapi-codegen/v2/pkg/codegen"
+	"github.com/oapi-codegen/oapi-codegen/v2/pkg/util"
 	"golang.org/x/tools/imports"
 	"gopkg.in/yaml.v3"
 	"mvdan.cc/gofumpt/format"
@@ -33,11 +34,9 @@ func Run(specPath, configPath, outputPath string) error {
 	}
 	opts.PackageName = detectPackageName(outputPath)
 
-	loader := openapi3.NewLoader()
-	loader.IsExternalRefsAllowed = true
-	spec, err := loader.LoadFromFile(specPath)
+	spec, err := loadSpec(opts, specPath)
 	if err != nil {
-		return fmt.Errorf("loading OpenAPI spec: %w", err)
+		return err
 	}
 
 	// Generate strict server types (RequestObject, ResponseObject, etc.)
@@ -53,6 +52,21 @@ func Run(specPath, configPath, outputPath string) error {
 	}
 
 	return nil
+}
+
+func loadSpec(opts codegen.Configuration, specPath string) (*openapi3.T, error) {
+	overlayOpts := util.LoadSwaggerWithOverlayOpts{
+		Path:   opts.OutputOptions.Overlay.Path,
+		Strict: true,
+	}
+	if opts.OutputOptions.Overlay.Strict != nil {
+		overlayOpts.Strict = *opts.OutputOptions.Overlay.Strict
+	}
+	swagger, err := util.LoadSwaggerWithOverlay(specPath, overlayOpts)
+	if err != nil {
+		return nil, fmt.Errorf("loading OpenAPI spec: %w", err)
+	}
+	return swagger, nil
 }
 
 func detectPackageName(outDir string) string {

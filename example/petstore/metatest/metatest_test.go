@@ -26,7 +26,7 @@ func TestGeneratedHandler(t *testing.T) {
 		require.NoError(t, err)
 
 		pet := &petstoretest.Pet{
-			Id:     ptr(int64(1)),
+			Id:     ptr(int32(1)),
 			Name:   "Marco",
 			Status: ptr(petstoretest.PetStatusSold),
 		}
@@ -62,13 +62,13 @@ func TestGeneratedHandler(t *testing.T) {
 		require.NoError(t, err)
 
 		marco := &petstoretest.Pet{
-			Id:     ptr(int64(1)),
+			Id:     ptr(int32(1)),
 			Name:   "Marco",
 			Status: ptr(petstoretest.PetStatusSold),
 		}
 
 		dolly := &petstoretest.Pet{
-			Id:   ptr(int64(2)),
+			Id:   ptr(int32(2)),
 			Name: "Dolly",
 			Category: &petstoretest.Category{
 				Name: ptr("Puppy"),
@@ -167,13 +167,13 @@ func TestGeneratedHandler(t *testing.T) {
 		require.NoError(t, err)
 
 		marco := &petstoretest.Pet{
-			Id:     ptr(int64(1)),
+			Id:     ptr(int32(1)),
 			Name:   "Marco",
 			Status: ptr(petstoretest.PetStatusSold),
 		}
 
 		dolly := &petstoretest.Pet{
-			Id:   ptr(int64(2)),
+			Id:   ptr(int32(2)),
 			Name: "Dolly",
 			Category: &petstoretest.Category{
 				Name: ptr("Puppy"),
@@ -224,7 +224,7 @@ func TestGeneratedHandler(t *testing.T) {
 		require.NoError(t, err)
 
 		pet := &petstoretest.Pet{
-			Id:     ptr(int64(1)),
+			Id:     ptr(int32(1)),
 			Name:   "Marco",
 			Status: ptr(petstoretest.PetStatusSold),
 		}
@@ -259,7 +259,7 @@ func TestFailureScenarios(t *testing.T) {
 		handler.ExpectGetPetById(
 			petstoretest.GetPetByIdRequestObject{PetId: 1},
 			petstoretest.GetPetById200JSONResponse{
-				Id:   ptr(int64(1)),
+				Id:   ptr(int32(1)),
 				Name: "Marco",
 			},
 		)
@@ -300,7 +300,7 @@ func TestFailureScenarios(t *testing.T) {
 		handler.ExpectGetPetById(
 			petstoretest.GetPetByIdRequestObject{PetId: 1},
 			petstoretest.GetPetById200JSONResponse{
-				Id:   ptr(int64(1)),
+				Id:   ptr(int32(1)),
 				Name: "Marco",
 			},
 			petstoretest.Times(1),
@@ -332,7 +332,7 @@ func TestFailureScenarios(t *testing.T) {
 		handler.ExpectGetPetById(
 			petstoretest.GetPetByIdRequestObject{PetId: 1},
 			petstoretest.GetPetById200JSONResponse{
-				Id:   ptr(int64(1)),
+				Id:   ptr(int32(1)),
 				Name: "Marco",
 			},
 			petstoretest.Times(3),

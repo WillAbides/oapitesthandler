@@ -60,7 +60,7 @@ func petFromOapi(op *oapi.Pet) *pet {
 		return nil
 	}
 	return &pet{
-		ID:       deref(op.Id),
+		ID:       int64(deref(op.Id)),
 		Name:     op.Name,
 		Status:   petStatusFromOapi(op.Status),
 		Category: deref(deref(op.Category).Name),

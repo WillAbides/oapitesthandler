@@ -32,7 +32,7 @@ func TestPetStoreService(t *testing.T) {
 				PetId: 1,
 			},
 			petstoretest.GetPetById200JSONResponse{
-				Id:     ptr(int64(1)),
+				Id:     ptr(int32(1)),
 				Name:   "Marco",
 				Status: ptr(petstoretest.PetStatusSold),
 			},
@@ -103,7 +103,7 @@ func TestPetStoreService(t *testing.T) {
 		handler.ExpectGetPetById(
 			petstoretest.GetPetByIdRequestObject{PetId: 1},
 			petstoretest.GetPetById200JSONResponse{
-				Id:     ptr(int64(1)),
+				Id:     ptr(int32(1)),
 				Name:   "Marco",
 				Status: ptr(petstoretest.PetStatusSold),
 			},
@@ -112,7 +112,7 @@ func TestPetStoreService(t *testing.T) {
 		handler.ExpectGetPetById(
 			petstoretest.GetPetByIdRequestObject{PetId: 2},
 			petstoretest.GetPetById200JSONResponse{
-				Id:   ptr(int64(2)),
+				Id:   ptr(int32(2)),
 				Name: "Dolly",
 				Category: &petstoretest.Category{
 					Name: ptr("Puppy"),

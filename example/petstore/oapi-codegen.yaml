@@ -5,6 +5,9 @@ output: internal/oapi/oapi_gen.go
 generate:
   models: true
   client: true
+output-options:
+  overlay:
+    path: openapi-overlay.yaml
 
 compatibility:
   always-prefix-enum-values: true
