@@ -5,7 +5,7 @@ on:
       - main
   workflow_dispatch:
   pull_request:
-    types: [ synchronize, opened, reopened, labeled, unlabeled ]
+    types: [synchronize, opened, reopened, labeled, unlabeled]
 jobs:
   cibuild:
     name: cibuild
@@ -39,6 +39,7 @@ jobs:
           create-release: true
           release-refs: main
           pre-tag-hook: script/release-hook
+          v0: true
 
       - name: add bindown template
         env:
