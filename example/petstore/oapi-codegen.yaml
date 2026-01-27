@@ -1,0 +1,12 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/oapi-codegen/oapi-codegen/HEAD/configuration-schema.json
+
+package: oapi
+output: internal/oapi/oapi_gen.go
+generate:
+  models: true
+  client: true
+
+compatibility:
+  always-prefix-enum-values: true
+import-mapping:
+  ./internal/common/openapi.yaml: github.com/willabides/oapitesthandler/example/petstore/internal/common/oapi
