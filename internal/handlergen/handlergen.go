@@ -246,19 +246,20 @@ func parseBodies(op codegen.OperationDefinition) []bodyData {
 }
 
 type operationData struct {
-	OperationID      string
-	MethodName       string
-	RequestType      string
-	ResponseType     string
-	ExpectationField string
-	HasBody          bool
-	HasGenericBody   bool
-	PathParams       []codegen.ParameterDefinition
-	HasQueryParams   bool
-	QueryParamsType  string
-	Bodies           []bodyData
-	BuilderTypeName  string
-	ResponseTypes    []responseTypeData
+	OperationID          string
+	LowercaseOperationID string
+	MethodName           string
+	RequestType          string
+	ResponseType         string
+	ExpectationField     string
+	HasBody              bool
+	HasGenericBody       bool
+	PathParams           []codegen.ParameterDefinition
+	HasQueryParams       bool
+	QueryParamsType      string
+	Bodies               []bodyData
+	BuilderTypeName      string
+	ResponseTypes        []responseTypeData
 }
 
 func buildTestHandler(operations []codegen.OperationDefinition, packageName string) (string, error) {
@@ -285,19 +286,20 @@ func buildTestHandler(operations []codegen.OperationDefinition, packageName stri
 		}
 
 		ops = append(ops, operationData{
-			OperationID:      op.OperationId,
-			MethodName:       "Expect" + op.OperationId,
-			RequestType:      op.OperationId + "RequestObject",
-			ResponseType:     op.OperationId + "ResponseObject",
-			ExpectationField: codegen.LowercaseFirstCharacter(op.OperationId) + "ExpectResponses",
-			HasBody:          op.HasBody(),
-			HasGenericBody:   hasGenericBody,
-			PathParams:       op.PathParams,
-			HasQueryParams:   hasQueryParams,
-			QueryParamsType:  queryParamsType,
-			Bodies:           bodies,
-			BuilderTypeName:  op.OperationId + "Expectation",
-			ResponseTypes:    parseResponseTypes(op),
+			OperationID:          op.OperationId,
+			LowercaseOperationID: codegen.LowercaseFirstCharacter(op.OperationId),
+			MethodName:           "Expect" + op.OperationId,
+			RequestType:          op.OperationId + "RequestObject",
+			ResponseType:         op.OperationId + "ResponseObject",
+			ExpectationField:     codegen.LowercaseFirstCharacter(op.OperationId) + "ExpectResponses",
+			HasBody:              op.HasBody(),
+			HasGenericBody:       hasGenericBody,
+			PathParams:           op.PathParams,
+			HasQueryParams:       hasQueryParams,
+			QueryParamsType:      queryParamsType,
+			Bodies:               bodies,
+			BuilderTypeName:      op.OperationId + "Expectation",
+			ResponseTypes:        parseResponseTypes(op),
 		})
 	}
 

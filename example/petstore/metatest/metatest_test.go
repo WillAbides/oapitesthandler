@@ -3,6 +3,7 @@ package metatest
 import (
 	"bytes"
 	"context"
+	"net/http"
 	"net/http/httptest"
 	"testing"
 	"time"
@@ -204,7 +205,7 @@ func TestGeneratedHandler(t *testing.T) {
 		handler.ExpectGetPetById(1, petstoretest.Times(3)).RespondJSON200(petstoretest.GetPetById200JSONResponse(*pet))
 
 		// Make three calls
-		for i := 0; i < 3; i++ {
+		for range 3 {
 			resp, callErr := client.GetPetByIdWithResponse(context.Background(), 1)
 			require.NoError(t, callErr)
 			require.Equal(t, 200, resp.StatusCode())
@@ -366,7 +367,7 @@ func TestFailureScenarios(t *testing.T) {
 		})
 
 		// Only make 2 calls
-		for i := 0; i < 2; i++ {
+		for range 2 {
 			resp, callErr := client.GetPetByIdWithResponse(context.Background(), 1)
 			require.NoError(t, callErr)
 			require.Equal(t, 200, resp.StatusCode())
@@ -395,6 +396,202 @@ func TestFailureScenarios(t *testing.T) {
 		resp, err := client.GetPetByIdWithResponse(context.Background(), 1)
 		require.NoError(t, err)
 		require.Equal(t, 500, resp.StatusCode())
+	})
+}
+
+func TestHandleMethod(t *testing.T) {
+	t.Run("basic handler invocation", func(t *testing.T) {
+		handler := petstoretest.NewTestHandler(t)
+		server := httptest.NewServer(handler)
+		defer server.Close()
+
+		client, err := oapi.NewClientWithResponses(server.URL)
+		require.NoError(t, err)
+
+		handler.ExpectGetPetById(1).Handle(func(req petstoretest.GetPetByIdRequestObject, w http.ResponseWriter) error {
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(200)
+			_, writeErr := w.Write([]byte(`{"id":1,"name":"Dynamic Pet"}`))
+			return writeErr
+		})
+
+		resp, err := client.GetPetByIdWithResponse(context.Background(), 1)
+		require.NoError(t, err)
+		require.Equal(t, 200, resp.StatusCode())
+		require.NotNil(t, resp.JSON200)
+		require.Equal(t, "Dynamic Pet", resp.JSON200.Name)
+	})
+
+	t.Run("handler with Times option", func(t *testing.T) {
+		handler := petstoretest.NewTestHandler(t)
+		server := httptest.NewServer(handler)
+		defer server.Close()
+
+		client, err := oapi.NewClientWithResponses(server.URL)
+		require.NoError(t, err)
+
+		callCount := 0
+		handler.ExpectGetPetById(1, petstoretest.Times(3)).Handle(func(
+			req petstoretest.GetPetByIdRequestObject,
+			w http.ResponseWriter,
+		) error {
+			callCount++
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(200)
+			_, writeErr := w.Write([]byte(`{"id":1,"name":"Pet ` + string(rune('0'+callCount)) + `"}`))
+			return writeErr
+		})
+
+		for i := 1; i <= 3; i++ {
+			resp, callErr := client.GetPetByIdWithResponse(context.Background(), 1)
+			require.NoError(t, callErr)
+			require.Equal(t, 200, resp.StatusCode())
+		}
+
+		require.Equal(t, 3, callCount)
+	})
+
+	t.Run("handler returning different responses based on request", func(t *testing.T) {
+		handler := petstoretest.NewTestHandler(t)
+		server := httptest.NewServer(handler)
+		defer server.Close()
+
+		client, err := oapi.NewClientWithResponses(server.URL)
+		require.NoError(t, err)
+
+		// Set up handler that returns different status codes based on pet ID
+		handler.ExpectGetPetById(1).Handle(func(req petstoretest.GetPetByIdRequestObject, w http.ResponseWriter) error {
+			if req.PetId == 1 {
+				w.Header().Set("Content-Type", "application/json")
+				w.WriteHeader(200)
+				_, writeErr := w.Write([]byte(`{"id":1,"name":"Found Pet"}`))
+				return writeErr
+			}
+			w.WriteHeader(404)
+			return nil
+		})
+
+		handler.ExpectGetPetById(999).Handle(func(
+			req petstoretest.GetPetByIdRequestObject,
+			w http.ResponseWriter,
+		) error {
+			w.WriteHeader(404)
+			return nil
+		})
+
+		// Call with ID 1 should succeed
+		resp1, err := client.GetPetByIdWithResponse(context.Background(), 1)
+		require.NoError(t, err)
+		require.Equal(t, 200, resp1.StatusCode())
+		require.NotNil(t, resp1.JSON200)
+
+		// Call with ID 999 should return 404
+		resp2, err := client.GetPetByIdWithResponse(context.Background(), 999)
+		require.NoError(t, err)
+		require.Equal(t, 404, resp2.StatusCode())
+	})
+
+	t.Run("handler returning errors", func(t *testing.T) {
+		handler := petstoretest.NewTestHandler(t)
+		server := httptest.NewServer(handler)
+		defer server.Close()
+
+		client, err := oapi.NewClientWithResponses(server.URL)
+		require.NoError(t, err)
+
+		// Handler that returns an error
+		handler.ExpectGetPetById(1).Handle(func(req petstoretest.GetPetByIdRequestObject, w http.ResponseWriter) error {
+			return assert.AnError
+		})
+
+		// The error should result in HTTP 500
+		resp, err := client.GetPetByIdWithResponse(context.Background(), 1)
+		require.NoError(t, err)
+		require.Equal(t, 500, resp.StatusCode())
+	})
+
+	t.Run("handler with request body", func(t *testing.T) {
+		handler := petstoretest.NewTestHandler(t)
+		server := httptest.NewServer(handler)
+		defer server.Close()
+
+		client, err := oapi.NewClientWithResponses(server.URL)
+		require.NoError(t, err)
+
+		// Use Handle with an operation that has a request body
+		handler.ExpectUpdateUser("john", petstoretest.UpdateUserJSONRequestBody{
+			Id:       ptr(int64(1)),
+			Username: ptr("john"),
+		}).Handle(func(req petstoretest.UpdateUserRequestObject, w http.ResponseWriter) error {
+			// Verify the request contains the expected data
+			require.NotNil(t, req.JSONBody)
+			require.Equal(t, int64(1), *req.JSONBody.Id)
+			require.Equal(t, "john", *req.JSONBody.Username)
+			require.Equal(t, "john", req.Username)
+
+			w.WriteHeader(200)
+			return nil
+		})
+
+		resp, err := client.UpdateUserWithResponse(
+			context.Background(),
+			"john",
+			oapi.UpdateUserJSONRequestBody{
+				Id:       ptr(int64(1)),
+				Username: ptr("john"),
+			},
+		)
+		require.NoError(t, err)
+		require.Equal(t, 200, resp.StatusCode())
+	})
+
+	t.Run("handler with generic Body io.Reader from WithBody", func(t *testing.T) {
+		handler := petstoretest.NewTestHandler(t)
+		server := httptest.NewServer(handler)
+		defer server.Close()
+
+		client, err := oapi.NewClientWithResponses(server.URL)
+		require.NoError(t, err)
+
+		// XML body content
+		xmlBody := []byte(`<Pet><id>42</id><name>XML Pet</name><status>available</status></Pet>`)
+
+		// Use Handle with WithBody method - this populates the Body io.Reader field
+		handler.ExpectAddPetWithBody("application/xml", xmlBody).Handle(func(
+			req petstoretest.AddPetRequestObject,
+			w http.ResponseWriter,
+		) error {
+			// Verify that the Body field is populated
+			require.NotNil(t, req.Body, "Body should be populated from WithBody")
+
+			// Read the body to verify content
+			bodyBytes := bytes.NewBuffer(nil)
+			if req.Body != nil {
+				_, readErr := bodyBytes.ReadFrom(req.Body)
+				require.NoError(t, readErr)
+			}
+
+			// Verify the body contains expected XML
+			require.Contains(t, bodyBytes.String(), "XML Pet")
+			require.Contains(t, bodyBytes.String(), "<id>42</id>")
+
+			// Return a custom response
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(201)
+			_, writeErr := w.Write([]byte(`{"id":42,"name":"XML Pet Created"}`))
+			return writeErr
+		})
+
+		// Make request with XML body
+		resp, err := client.AddPetWithBodyWithResponse(
+			context.Background(),
+			"application/xml",
+			bytes.NewReader(xmlBody),
+		)
+		require.NoError(t, err)
+		require.Equal(t, 201, resp.StatusCode())
+		require.NotNil(t, resp.JSON201)
+		require.Equal(t, "XML Pet Created", resp.JSON201.Name)
 	})
 }
 

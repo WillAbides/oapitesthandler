@@ -7,6 +7,7 @@ linters:
     - gosec
     - revive
     - unconvert
+    - modernize
   settings:
     errcheck:
       check-blank: true
