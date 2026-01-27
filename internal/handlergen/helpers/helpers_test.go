@@ -43,8 +43,8 @@ func TestKeyHash(t *testing.T) {
 			JSONBody: &testBody{Field1: "value", Field2: 42},
 		}
 
-		hash1 := keyHash(req1)
-		hash2 := keyHash(req2)
+		hash1 := keyHash(req1, nil)
+		hash2 := keyHash(req2, nil)
 
 		assert.Equal(t, hash1, hash2, "expected same hash for identical requests")
 	})
@@ -53,8 +53,8 @@ func TestKeyHash(t *testing.T) {
 		req1 := testRequest{ID: 1, Name: "test"}
 		req2 := testRequest{ID: 2, Name: "test"}
 
-		hash1 := keyHash(req1)
-		hash2 := keyHash(req2)
+		hash1 := keyHash(req1, nil)
+		hash2 := keyHash(req2, nil)
 
 		assert.NotEqual(t, hash1, hash2, "expected different hashes for different requests")
 	})
@@ -71,8 +71,8 @@ func TestKeyHash(t *testing.T) {
 			Body: strings.NewReader("body content 2"),
 		}
 
-		hash1 := keyHash(req1)
-		hash2 := keyHash(req2)
+		hash1 := keyHash(req1, nil)
+		hash2 := keyHash(req2, nil)
 
 		assert.Equal(t, hash1, hash2, "expected same hash when only io.Reader differs")
 	})
@@ -81,8 +81,8 @@ func TestKeyHash(t *testing.T) {
 		req1 := testRequest{ID: 1, Name: "test", JSONBody: nil}
 		req2 := testRequest{ID: 1, Name: "test", JSONBody: &testBody{}}
 
-		hash1 := keyHash(req1)
-		hash2 := keyHash(req2)
+		hash1 := keyHash(req1, nil)
+		hash2 := keyHash(req2, nil)
 
 		assert.NotEqual(t, hash1, hash2, "expected different hashes for nil vs non-nil pointer")
 	})
@@ -91,8 +91,8 @@ func TestKeyHash(t *testing.T) {
 func TestHashValue(t *testing.T) {
 	t.Run("nil values", func(t *testing.T) {
 		var nilPtr *testRequest
-		hash1 := keyHash(nilPtr)
-		hash2 := keyHash(nilPtr)
+		hash1 := keyHash(nilPtr, nil)
+		hash2 := keyHash(nilPtr, nil)
 		assert.Equal(t, hash1, hash2, "expected consistent hash for nil pointer")
 	})
 
@@ -104,9 +104,9 @@ func TestHashValue(t *testing.T) {
 		req2 := sliceReq{Values: []int{1, 2, 3}}
 		req3 := sliceReq{Values: []int{1, 2, 4}}
 
-		hash1 := keyHash(req1)
-		hash2 := keyHash(req2)
-		hash3 := keyHash(req3)
+		hash1 := keyHash(req1, nil)
+		hash2 := keyHash(req2, nil)
+		hash3 := keyHash(req3, nil)
 
 		assert.Equal(t, hash1, hash2, "expected same hash for identical slices")
 		assert.NotEqual(t, hash1, hash3, "expected different hash for different slices")
@@ -120,9 +120,9 @@ func TestHashValue(t *testing.T) {
 		req2 := mapReq{Values: map[string]int{"b": 2, "a": 1}} // Different order
 		req3 := mapReq{Values: map[string]int{"a": 1, "b": 3}}
 
-		hash1 := keyHash(req1)
-		hash2 := keyHash(req2)
-		hash3 := keyHash(req3)
+		hash1 := keyHash(req1, nil)
+		hash2 := keyHash(req2, nil)
+		hash3 := keyHash(req3, nil)
 
 		assert.Equal(t, hash1, hash2, "expected same hash for maps regardless of insertion order")
 		assert.NotEqual(t, hash1, hash3, "expected different hash for different map values")
@@ -136,9 +136,9 @@ func TestHashValue(t *testing.T) {
 		req2 := arrayReq{Values: [3]int{1, 2, 3}}
 		req3 := arrayReq{Values: [3]int{1, 2, 4}}
 
-		hash1 := keyHash(req1)
-		hash2 := keyHash(req2)
-		hash3 := keyHash(req3)
+		hash1 := keyHash(req1, nil)
+		hash2 := keyHash(req2, nil)
+		hash3 := keyHash(req3, nil)
 
 		assert.Equal(t, hash1, hash2, "expected same hash for identical arrays")
 		assert.NotEqual(t, hash1, hash3, "expected different hash for different arrays")
@@ -158,9 +158,9 @@ func TestHashValue(t *testing.T) {
 			JSONBody: &testBody{Field1: "nested", Field2: 100},
 		}
 
-		hash1 := keyHash(req1)
-		hash2 := keyHash(req2)
-		hash3 := keyHash(req3)
+		hash1 := keyHash(req1, nil)
+		hash2 := keyHash(req2, nil)
+		hash3 := keyHash(req3, nil)
 
 		assert.Equal(t, hash1, hash2, "expected same hash for identical nested structs")
 		assert.NotEqual(t, hash1, hash3, "expected different hash for different nested structs")
@@ -170,14 +170,14 @@ func TestHashValue(t *testing.T) {
 func TestExpectations(t *testing.T) {
 	t.Run("basic expect and get", func(t *testing.T) {
 		tb := testutil.NewTB(t)
-		exp := &expectations[testRequest, testResponse]{}
+		exp := &expectResponses[testRequest, testResponse]{}
 
 		req := testRequest{ID: 1, Name: "test"}
 		resp := testResponse{Status: 200, Message: "ok"}
 
-		exp.Expect(tb, req, resp)
+		exp.expect(tb, req, nil, resp)
 
-		got, err := exp.GetResponse(tb, req)
+		got, err := exp.getResponse(tb, req, nil)
 		require.NoError(t, err)
 		assert.Equal(t, resp.Status, got.Status)
 		assert.Equal(t, resp.Message, got.Message)
@@ -189,14 +189,14 @@ func TestExpectations(t *testing.T) {
 
 	t.Run("unmet expectation triggers error on cleanup", func(t *testing.T) {
 		tb := testutil.NewTB(t)
-		exp := &expectations[testRequest, testResponse]{}
+		exp := &expectResponses[testRequest, testResponse]{}
 
 		req := testRequest{ID: 1, Name: "test"}
 		resp := testResponse{Status: 200, Message: "ok"}
 
-		exp.Expect(tb, req, resp)
+		exp.expect(tb, req, nil, resp)
 
-		// Don't call GetResponse - expectation remains unmet
+		// Don't call getResponse - expectation remains unmet
 
 		tb.RunCleanups()
 		tb.AssertErrors()
@@ -204,15 +204,15 @@ func TestExpectations(t *testing.T) {
 
 	t.Run("Times option", func(t *testing.T) {
 		tb := testutil.NewTB(t)
-		exp := &expectations[testRequest, testResponse]{}
+		exp := &expectResponses[testRequest, testResponse]{}
 
 		req := testRequest{ID: 1, Name: "test"}
 		resp := testResponse{Status: 200, Message: "ok"}
 
-		exp.Expect(tb, req, resp, Times(3))
+		exp.expect(tb, req, nil, resp, Times(3))
 
 		for i := 0; i < 3; i++ {
-			got, err := exp.GetResponse(tb, req)
+			got, err := exp.getResponse(tb, req, nil)
 			require.NoError(t, err, "call %d", i+1)
 			assert.Equal(t, resp.Status, got.Status, "call %d", i+1)
 		}
@@ -223,36 +223,36 @@ func TestExpectations(t *testing.T) {
 
 	t.Run("Times option exceeded", func(t *testing.T) {
 		tb := testutil.NewTB(t)
-		exp := &expectations[testRequest, testResponse]{}
+		exp := &expectResponses[testRequest, testResponse]{}
 
 		req := testRequest{ID: 1, Name: "test"}
 		resp := testResponse{Status: 200, Message: "ok"}
 
-		exp.Expect(tb, req, resp, Times(2))
+		exp.expect(tb, req, nil, resp, Times(2))
 
 		// Call twice successfully
 		for i := 0; i < 2; i++ {
-			_, err := exp.GetResponse(tb, req)
+			_, err := exp.getResponse(tb, req, nil)
 			require.NoError(t, err, "call %d", i+1)
 		}
 
 		// Third call should fail
-		_, err := exp.GetResponse(tb, req)
+		_, err := exp.getResponse(tb, req, nil)
 		assert.Error(t, err, "expected error on third call")
 		tb.AssertErrors()
 	})
 
 	t.Run("WithError option", func(t *testing.T) {
 		tb := testutil.NewTB(t)
-		exp := &expectations[testRequest, testResponse]{}
+		exp := &expectResponses[testRequest, testResponse]{}
 
 		req := testRequest{ID: 1, Name: "test"}
 		resp := testResponse{Status: 500, Message: "error"}
 		expectedErr := errors.New("test error")
 
-		exp.Expect(tb, req, resp, WithError(expectedErr))
+		exp.expect(tb, req, nil, resp, WithError(expectedErr))
 
-		got, err := exp.GetResponse(tb, req)
+		got, err := exp.getResponse(tb, req, nil)
 		assert.Equal(t, expectedErr, err)
 		assert.Equal(t, resp.Status, got.Status)
 
@@ -262,33 +262,33 @@ func TestExpectations(t *testing.T) {
 
 	t.Run("no expectation found", func(t *testing.T) {
 		tb := testutil.NewTB(t)
-		exp := &expectations[testRequest, testResponse]{}
+		exp := &expectResponses[testRequest, testResponse]{}
 
 		req := testRequest{ID: 1, Name: "test"}
 
-		_, err := exp.GetResponse(tb, req)
+		_, err := exp.getResponse(tb, req, nil)
 		assert.Error(t, err, "expected error when no expectation found")
 		tb.AssertErrors()
 	})
 
 	t.Run("FIFO matching", func(t *testing.T) {
 		tb := testutil.NewTB(t)
-		exp := &expectations[testRequest, testResponse]{}
+		exp := &expectResponses[testRequest, testResponse]{}
 
 		req := testRequest{ID: 1, Name: "test"}
 		resp1 := testResponse{Status: 200, Message: "first"}
 		resp2 := testResponse{Status: 201, Message: "second"}
 
-		exp.Expect(tb, req, resp1)
-		exp.Expect(tb, req, resp2)
+		exp.expect(tb, req, nil, resp1)
+		exp.expect(tb, req, nil, resp2)
 
 		// First call should return first expectation
-		got1, err := exp.GetResponse(tb, req)
+		got1, err := exp.getResponse(tb, req, nil)
 		require.NoError(t, err)
 		assert.Equal(t, "first", got1.Message)
 
 		// Second call should return second expectation
-		got2, err := exp.GetResponse(tb, req)
+		got2, err := exp.getResponse(tb, req, nil)
 		require.NoError(t, err)
 		assert.Equal(t, "second", got2.Message)
 
@@ -298,19 +298,19 @@ func TestExpectations(t *testing.T) {
 
 	t.Run("concurrent access", func(t *testing.T) {
 		tb := testutil.NewTB(t)
-		exp := &expectations[testRequest, testResponse]{}
+		exp := &expectResponses[testRequest, testResponse]{}
 
 		req := testRequest{ID: 1, Name: "test"}
 		resp := testResponse{Status: 200, Message: "ok"}
 
-		exp.Expect(tb, req, resp, Times(100))
+		exp.expect(tb, req, nil, resp, Times(100))
 
 		var wg sync.WaitGroup
 		for i := 0; i < 100; i++ {
 			wg.Add(1)
 			go func() {
 				defer wg.Done()
-				_, err := exp.GetResponse(tb, req)
+				_, err := exp.getResponse(tb, req, nil)
 				assert.NoError(t, err)
 			}()
 		}

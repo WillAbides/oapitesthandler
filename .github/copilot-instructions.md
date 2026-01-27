@@ -53,20 +53,26 @@ API calls in your tests.
 
 **internal/handlergen/helpers/helpers.go** - Core expectation matching library
 
-- `expectations[REQ, RESP]` type manages request/response expectations
-- `keyHash()` creates deterministic hashes using JSON marshaling and FNV-128 hashing (io.Reader fields marshal to empty objects and don't affect the hash)
-- `Expect()` sets up expectations with optional `Times()` and `WithError()` options
-- `Handle()` and `GetResponse()` match incoming requests to expectations
+- `expectResponses[REQ, RESP]` type manages expected responses for requests
+- `expectResponse[REQ, RESP]` type represents a single expected request/response pair
+- `keyHash()` creates deterministic hashes using JSON marshaling and FNV-128 hashing
+- `expect()` sets up expectations with optional `Times()` and `WithError()` options, accepts `rawRequestBody []byte` for matching io.Reader bodies
+- `getResponse()` matches incoming requests to expectations, uses `rawRequestBody` for hash when provided (for io.Reader body matching)
+- For operations with generic Body (io.Reader), testServer reads the body bytes and passes to `getResponse()` for accurate matching
 
 **internal/handlergen** - Code generation engine
 
 - Reads OpenAPI spec and oapi-codegen config YAML
 - Generates four files in output directory:
     - `oapi_gen.go`: Standard oapi-codegen output (models, strict server types)
-    - `handler.go`: TestHandler with Expect methods for each operation
-    - `server.go`: testServer that implements the strict server interface
-    - `helpers.go`: Helper types and functions (TB interface, ExpectOption, Expectations)
-- Uses templates to generate handler methods that delegate to `Expectations`
+    - `handler.go`: TestHandler with builder types and Expect methods that return builders
+    - `server.go`: testServer that implements the strict server interface, reads io.Reader bodies for matching
+    - `helpers.go`: Helper types and functions (TB interface, ExpectOption, expectResponses, expectResponse)
+- Uses templates to generate handler methods:
+    - Operations without bodies: path/query parameters extracted as individual arguments
+    - Operations with bodies: multiple methods using oapi-codegen's `Suffix()` for naming
+    - WithBody methods accept `[]byte` and pass as `rawRequestBody` to `expect()`
+- testServer methods conditionally read req.Body and pass bytes to `getResponse()` for operations with generic bodies
 
 **cmd/oapitesthandler** - CLI entry point
 
@@ -78,22 +84,106 @@ API calls in your tests.
 
 For each OpenAPI operation, the generator creates:
 
-1. An `Expectations` field in TestHandler (e.g., `getPetByIdExpectations`)
-2. An `Expect{OperationID}` method on TestHandler
-3. A handler method on testServer that calls `GetResponse()` on the expectations
+1. An `expectResponses` field in TestHandler (e.g., `getPetByIdExpectResponses`)
+2. An `Expect{OperationID}` method on TestHandler that returns an `{OperationID}Expectation` builder
+3. Builder methods for each response type (e.g., `RespondJSON200`, `Respond404`, `RespondWithError`)
+4. A handler method on testServer that calls `getResponse()` on the expectResponses field
 
-Example workflow:
+The generator uses a **fluent builder API pattern** where Expect methods return a builder, and you chain a Respond method to set the response:
+
+**Operations WITHOUT request bodies** (GET, DELETE without body) have expanded parameters:
+```go
+// Path parameters only
+handler.ExpectGetPetById(petId int64, opts...).RespondJSON200(response)
+
+// Query parameters only
+handler.ExpectFindPetsByStatus(queryParams *FindPetsByStatusParams, opts...).RespondJSON200(response)
+
+// Path + query parameters
+handler.ExpectDeletePet(petId int64, queryParams *DeletePetParams, opts...).Respond200()
+
+// No parameters at all
+handler.ExpectGetStoreInventory(opts...).RespondJSON200(response)
+```
+
+**Operations WITH request bodies** (POST, PUT, PATCH) generate multiple methods, one per content type:
+```go
+// Default method for JSON (most common)
+handler.ExpectUpdateUser(username string, body UpdateUserJSONRequestBody, opts...).RespondJSON200(response)
+
+// Method for formdata content type
+handler.ExpectUpdateUserWithFormdataBody(username string, body UpdateUserFormdataRequestBody, opts...).RespondJSON200(response)
+
+// Generic method for arbitrary content types
+handler.ExpectUpdateUserWithBody(username string, contentType string, body []byte, opts...).RespondJSON200(response)
+```
+
+**Response methods** are generated based on the OpenAPI responses:
+```go
+// JSON responses include content type in method name
+builder.RespondJSON200(response)   // 200 OK with JSON content
+builder.RespondJSON404(response)   // 404 Not Found with JSON content
+
+// Responses without content (like 204 No Content, or empty 200 responses)
+builder.Respond204()               // No parameter - response has no content
+builder.Respond200()               // No parameter - response has no content
+
+// Error responses
+builder.RespondWithError(err)      // Returns HTTP 500
+```
+
+The method naming uses oapi-codegen's `Suffix()` method:
+- Default body type (usually JSON): no suffix
+- Named body types: `With{NameTag}Body` suffix (e.g., `WithFormdataBody`)
+- Generic body: `WithBody` suffix, accepts `contentType` and `[]byte`
+- Response methods: `Respond{ContentType}{StatusCode}` (e.g., `RespondJSON200`)
+- Responses without content: `Respond{StatusCode}` (e.g., `Respond204`)
+
+Example workflow for operation without body:
 
 ```go
 // In test:
-handler.ExpectGetPetById(requestObj, responseObj)
+handler.ExpectGetPetById(1).RespondJSON200(responseObj)
 
 // Under the hood:
-// 1. Expectation stored in handler.getPetByIdExpectations
-// 2. HTTP request triggers StrictHandler
-// 3. StrictHandler calls testServer.GetPetById()
-// 4. testServer.GetPetById calls expectations.GetResponse()
-// 5. Response returned if expectation matches
+// 1. ExpectGetPetById constructs GetPetByIdRequestObject{PetId: 1} and returns builder
+// 2. RespondJSON200 stores expectation with expect(req, nil, resp, opts)
+// 3. HTTP request triggers StrictHandler
+// 4. StrictHandler calls testServer.GetPetById()
+// 5. testServer.GetPetById calls getResponse(req, nil)
+// 6. Response returned if expectation matches
+```
+
+Example workflow for operation with generic body:
+
+```go
+// In test:
+bodyBytes := []byte(`<User><id>1</id><username>john</username></User>`)
+handler.ExpectUpdateUserWithBody("john", "application/xml", bodyBytes).RespondJSON200(responseObj)
+
+// Under the hood:
+// 1. ExpectUpdateUserWithBody constructs UpdateUserRequestObject{Username: "john", Body: bytes.NewReader(bodyBytes)}
+// 2. Returns builder with rawBody=bodyBytes
+// 3. RespondJSON200 stores expectation with expect(req, bodyBytes, resp, opts) - rawRequestBody=bodyBytes
+// 4. HTTP request triggers StrictHandler
+// 5. StrictHandler calls testServer.UpdateUser()
+// 6. testServer reads req.Body using io.ReadAll to get rawBytes
+// 7. testServer calls getResponse(req, rawBytes)
+// 8. Response returned if expectation matches (using rawBytes for hash)
+```
+
+Example with options:
+
+```go
+// Expect the same call 3 times with Times option
+handler.ExpectGetPetById(1, petstoretest.Times(3)).RespondJSON200(responseObj)
+
+// Different response codes for different scenarios
+handler.ExpectGetPetById(1).RespondJSON200(foundResponse)
+handler.ExpectGetPetById(999).Respond404()
+
+// Return an error (HTTP 500)
+handler.ExpectGetPetById(1).RespondWithError(errors.New("internal server error"))
 ```
 
 ### Testing Pattern
@@ -109,11 +199,20 @@ Tests use httptest.NewServer with the TestHandler:
 
 ### Key Design Decisions
 
-- Request matching uses content hashing, not equality, because io.Reader fields are consumed
-- Expectations are matched FIFO - first matching expectation with remaining times is used
-- Each expectation tracks remaining invocations via `times` counter
-- Cleanup functions automatically verify expectations were fully consumed
-- Generated code uses oapi-codegen's strict server interface for type safety
+- **Fluent builder API pattern**: Expect methods return a builder with type-safe Respond methods for each possible response type, providing better discoverability through IDE autocomplete
+- **Response method generation**: For each response defined in the OpenAPI spec, a `Respond{ContentType}{StatusCode}` method is generated on the builder (non-integer status codes like "default" are skipped)
+- **Empty response handling**: Responses without content (no schema defined) generate parameterless methods like `Respond200()` instead of requiring an empty struct parameter
+- **Options placement**: Options like `Times()` are passed to the Expect method, not the Respond method, for cleaner syntax: `ExpectGetPetById(1, Times(3)).RespondJSON200(...)`
+- **Error handling**: `RespondWithError(err)` is a separate method that returns HTTP 500, providing a clean way to test error scenarios
+- **Request matching with rawRequestBody**: For operations with generic io.Reader bodies, the raw bytes are passed separately to `expect()` and `getResponse()` for matching, since io.Reader fields are consumed and can't be reliably hashed
+- **Ergonomic method signatures**: Path and query parameters are extracted as individual function parameters instead of requiring full RequestObject construction
+- **Multiple methods per operation**: Operations with request bodies generate separate methods for each content type (JSON, formdata, generic), all returning the same builder type
+- **Method naming**: Uses oapi-codegen's `Suffix()` method - default body gets no suffix, others get `With{NameTag}Body`
+- **Generic body accepts []byte**: WithBody methods accept `[]byte` instead of `io.Reader` for convenience, converting internally with `bytes.NewReader()`
+- **FIFO expectation matching**: First matching expectation with remaining times is used
+- **Expectation tracking**: Each expectation tracks remaining invocations via `times` counter
+- **Automatic verification**: Cleanup functions verify all expectations were fully consumed
+- **Type safety**: Generated code uses oapi-codegen's strict server interface
 
 ## oapi-codegen Integration
 

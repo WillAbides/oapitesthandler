@@ -27,16 +27,11 @@ func TestPetStoreService(t *testing.T) {
 		store := newTestStore(t, server.URL)
 
 		// Set expectation on the mock server
-		handler.ExpectGetPetById(
-			petstoretest.GetPetByIdRequestObject{
-				PetId: 1,
-			},
-			petstoretest.GetPetById200JSONResponse{
-				Id:     ptr(int32(1)),
-				Name:   "Marco",
-				Status: ptr(petstoretest.PetStatusSold),
-			},
-		)
+		handler.ExpectGetPetById(1).RespondJSON200(petstoretest.GetPetById200JSONResponse{
+			Id:     ptr(int32(1)),
+			Name:   "Marco",
+			Status: ptr(petstoretest.PetStatusSold),
+		})
 
 		// Call the service method - it will make HTTP request to our mock server
 		got, found, err := store.getPetByID(context.Background(), 1)
@@ -56,12 +51,9 @@ func TestPetStoreService(t *testing.T) {
 
 		store := newTestStore(t, server.URL)
 
-		handler.ExpectGetPetById(
-			petstoretest.GetPetByIdRequestObject{PetId: 999},
-			petstoretest.GetPetById404JSONResponse{
-				Message: ptr("Pet not found"),
-			},
-		)
+		handler.ExpectGetPetById(999).RespondJSON404(petstoretest.GetPetById404JSONResponse{
+			Message: ptr("Pet not found"),
+		})
 
 		got, found, err := store.getPetByID(context.Background(), 999)
 		require.NoError(t, err)
@@ -76,14 +68,11 @@ func TestPetStoreService(t *testing.T) {
 
 		store := newTestStore(t, server.URL)
 
-		handler.ExpectGetPetById(
-			petstoretest.GetPetByIdRequestObject{PetId: 3},
-			petstoretest.GetPetById400JSONResponse{
-				ErrorJSONResponse: petstoretest.ErrorJSONResponse{
-					Message: ptr("Bad request"),
-				},
+		handler.ExpectGetPetById(3).RespondJSON400(petstoretest.GetPetById400JSONResponse{
+			ErrorJSONResponse: petstoretest.ErrorJSONResponse{
+				Message: ptr("Bad request"),
 			},
-		)
+		})
 
 		got, found, err := store.getPetByID(context.Background(), 3)
 		require.Error(t, err)
@@ -100,32 +89,23 @@ func TestPetStoreService(t *testing.T) {
 		store := newTestStore(t, server.URL)
 
 		// Set up expectations for different pets
-		handler.ExpectGetPetById(
-			petstoretest.GetPetByIdRequestObject{PetId: 1},
-			petstoretest.GetPetById200JSONResponse{
-				Id:     ptr(int32(1)),
-				Name:   "Marco",
-				Status: ptr(petstoretest.PetStatusSold),
-			},
-		)
+		handler.ExpectGetPetById(1).RespondJSON200(petstoretest.GetPetById200JSONResponse{
+			Id:     ptr(int32(1)),
+			Name:   "Marco",
+			Status: ptr(petstoretest.PetStatusSold),
+		})
 
-		handler.ExpectGetPetById(
-			petstoretest.GetPetByIdRequestObject{PetId: 2},
-			petstoretest.GetPetById200JSONResponse{
-				Id:   ptr(int32(2)),
-				Name: "Dolly",
-				Category: &petstoretest.Category{
-					Name: ptr("Puppy"),
-				},
+		handler.ExpectGetPetById(2).RespondJSON200(petstoretest.GetPetById200JSONResponse{
+			Id:   ptr(int32(2)),
+			Name: "Dolly",
+			Category: &petstoretest.Category{
+				Name: ptr("Puppy"),
 			},
-		)
+		})
 
-		handler.ExpectGetPetById(
-			petstoretest.GetPetByIdRequestObject{PetId: 3},
-			petstoretest.GetPetById404JSONResponse{
-				Message: ptr("Not found"),
-			},
-		)
+		handler.ExpectGetPetById(3).RespondJSON404(petstoretest.GetPetById404JSONResponse{
+			Message: ptr("Not found"),
+		})
 
 		// Call method that makes multiple requests
 		got, err := store.getPetsByIDs(context.Background(), 1, 2, 3)
@@ -135,6 +115,26 @@ func TestPetStoreService(t *testing.T) {
 		require.Equal(t, "Marco", got[0].Name)
 		require.Equal(t, int64(2), got[1].ID)
 		require.Equal(t, "Dolly", got[1].Name)
+	})
+
+	t.Run("update pet status", func(t *testing.T) {
+		handler := petstoretest.NewTestHandler(t)
+		server := httptest.NewServer(handler)
+		defer server.Close()
+
+		store := newTestStore(t, server.URL)
+
+		handler.ExpectUpdatePet(petstoretest.UpdatePetJSONRequestBody{
+			Id:     ptr(int32(1)),
+			Status: ptr(petstoretest.PetStatusSold),
+		}).RespondJSON200(petstoretest.UpdatePet200JSONResponse{
+			Id:     ptr(int32(1)),
+			Name:   "Marco",
+			Status: ptr(petstoretest.PetStatusSold),
+		})
+
+		err := store.updatePetStatus(context.Background(), 1, petStatusSold)
+		require.NoError(t, err)
 	})
 }
 

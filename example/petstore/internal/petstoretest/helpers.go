@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"hash/fnv"
+	"io"
 	"slices"
 	"sync"
 )
@@ -33,18 +34,33 @@ func WithError(err error) ExpectOption {
 	}
 }
 
-func keyHash(req any) string {
-	h := fnv.New128()
-	err := json.NewEncoder(h).Encode(req)
+func keyHash(req any, rawRequestBody []byte) string {
+	// json marshal/unmarshal errors are programming errors, so we can panic on them
+	// specifically it means our assumption about the request type is wrong
+
+	reqBytes, err := json.Marshal(req)
 	if err != nil {
-		// if encoding fails, panic as this indicates a programming error, not a runtime error
-		// specifically it means our assumption about the request type is wrong
-		panic("hash write failed: " + err.Error())
+		panic(err)
+	}
+	var mp map[string]any
+	err = json.Unmarshal(reqBytes, &mp)
+	if err != nil {
+		panic(err)
+	}
+	delete(mp, "Body")
+
+	h := fnv.New128()
+	err = json.NewEncoder(h).Encode(map[string]any{
+		"request":        mp,
+		"rawRequestBody": rawRequestBody,
+	})
+	if err != nil {
+		panic(err)
 	}
 	return hex.EncodeToString(h.Sum(nil))
 }
 
-type expectation[REQ, RESP any] struct {
+type expectResponse[REQ, RESP any] struct {
 	error    error
 	request  REQ
 	response RESP
@@ -53,8 +69,8 @@ type expectation[REQ, RESP any] struct {
 	times   int
 }
 
-type expectations[REQ, RESP any] struct {
-	expectations []*expectation[REQ, RESP]
+type expectResponses[REQ, RESP any] struct {
+	expectations []*expectResponse[REQ, RESP]
 	lock         sync.Mutex
 }
 
@@ -63,7 +79,7 @@ type TB interface {
 	Errorf(format string, args ...any)
 }
 
-func (e *expectations[REQ, RESP]) Expect(t TB, req REQ, resp RESP, opts ...ExpectOption) {
+func (e *expectResponses[REQ, RESP]) expect(t TB, req REQ, rawRequestBody io.Reader, resp RESP, opts ...ExpectOption) {
 	e.lock.Lock()
 	defer e.lock.Unlock()
 
@@ -72,12 +88,21 @@ func (e *expectations[REQ, RESP]) Expect(t TB, req REQ, resp RESP, opts ...Expec
 		o(&options)
 	}
 
-	ex := &expectation[REQ, RESP]{
+	var bodyBytes []byte
+	if rawRequestBody != nil {
+		var err error
+		bodyBytes, err = io.ReadAll(rawRequestBody)
+		if err != nil {
+			t.Errorf("reading request body: %v", err)
+		}
+	}
+
+	ex := &expectResponse[REQ, RESP]{
 		request:  req,
 		response: resp,
 		error:    options.error,
 		times:    options.times,
-		keyHash:  keyHash(req),
+		keyHash:  keyHash(req, bodyBytes),
 	}
 	e.expectations = append(e.expectations, ex)
 
@@ -91,16 +116,27 @@ func (e *expectations[REQ, RESP]) Expect(t TB, req REQ, resp RESP, opts ...Expec
 	})
 }
 
-func (e *expectations[REQ, RESP]) GetResponse(t TB, req REQ) (RESP, error) {
+func (e *expectResponses[REQ, RESP]) getResponse(t TB, req REQ, rawRequestBody io.Reader) (RESP, error) {
 	e.lock.Lock()
 	defer e.lock.Unlock()
 
-	key := keyHash(req)
-	idx := slices.IndexFunc(e.expectations, func(e *expectation[REQ, RESP]) bool {
+	var zeroResp RESP
+
+	bodyBytes, err := func() ([]byte, error) {
+		if rawRequestBody == nil {
+			return nil, nil
+		}
+		return io.ReadAll(rawRequestBody)
+	}()
+	if err != nil {
+		return zeroResp, fmt.Errorf("reading request body: %w", err)
+	}
+
+	key := keyHash(req, bodyBytes)
+	idx := slices.IndexFunc(e.expectations, func(e *expectResponse[REQ, RESP]) bool {
 		return e.times > 0 && e.keyHash == key
 	})
 	if idx == -1 {
-		var zeroResp RESP
 		t.Errorf("no expectation found for request %+v", req)
 		return zeroResp, fmt.Errorf("no expectation found for request")
 	}

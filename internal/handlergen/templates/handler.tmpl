@@ -1,0 +1,139 @@
+package {{.PackageName}}
+
+import (
+	"bytes"
+	"io"
+	"net/http"
+)
+
+type TestHandler struct {
+	tb TB
+
+	handler http.Handler
+{{range .Operations}}
+	{{.ExpectationField}} expectResponses[{{.RequestType}}, {{.ResponseType}}]
+{{- end}}
+}
+
+func (s *TestHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	s.handler.ServeHTTP(w, r)
+}
+
+func NewTestHandler(tb TB) *TestHandler {
+	th := &TestHandler{tb: tb}
+	s := &testServer{tb: tb, handler: th}
+	th.handler = Handler(NewStrictHandler(s, nil))
+	return th
+}
+
+{{template "builderTypes" .}}
+
+{{range .Operations -}}
+{{if .HasBody -}}
+{{template "expectWithBody" .}}
+{{else -}}
+{{template "expectWithoutBody" .}}
+{{end -}}
+{{end -}}
+
+{{define "builderTypes"}}
+{{range .Operations -}}
+{{$op := . -}}
+type {{.BuilderTypeName}} struct {
+	handler *TestHandler
+	req     {{.RequestType}}
+	{{if .HasGenericBody -}}
+	rawBody io.Reader
+	{{end -}}
+	opts    []ExpectOption
+}
+
+{{range .ResponseTypes -}}
+// {{.MethodName}} sets the expectation to return a {{.StatusCode}} response{{if .ContentType}} with {{.ContentType}} content{{end}}.
+func (b *{{$op.BuilderTypeName}}) {{.MethodName}}({{if not .IsEmpty}}resp {{.TypeName}}{{end}}) {
+	{{if .IsEmpty -}}
+	var resp {{.TypeName}}
+	{{end -}}
+	{{if $op.HasGenericBody -}}
+	b.handler.{{$op.ExpectationField}}.expect(b.handler.tb, b.req, b.rawBody, resp, b.opts...)
+	{{else -}}
+	b.handler.{{$op.ExpectationField}}.expect(b.handler.tb, b.req, nil, resp, b.opts...)
+	{{end -}}
+}
+
+{{end -}}
+
+// RespondWithError sets the expectation to return an error instead of a response.
+func (b *{{.BuilderTypeName}}) RespondWithError(err error) {
+	var zeroResp {{.ResponseType}}
+	{{if .HasGenericBody -}}
+	b.handler.{{.ExpectationField}}.expect(b.handler.tb, b.req, b.rawBody, zeroResp, append(b.opts, WithError(err))...)
+	{{else -}}
+	b.handler.{{.ExpectationField}}.expect(b.handler.tb, b.req, nil, zeroResp, append(b.opts, WithError(err))...)
+	{{end -}}
+}
+
+{{end -}}
+{{end}}
+
+{{define "expectWithBody"}}
+{{range .Bodies -}}
+func (s *TestHandler) Expect{{$.OperationID}}{{.MethodSuffix}}(
+{{range $.PathParams -}}
+	{{.GoVariableName}} {{.TypeDef}},
+{{end -}}
+{{if .RequiresContentType -}}
+	contentType string,
+{{end -}}
+	body {{.TypeName}},
+	opts ...ExpectOption,
+) *{{$.BuilderTypeName}} {
+	req := {{$.RequestType}}{
+	{{range $.PathParams -}}
+		{{.GoName}}: {{.GoVariableName}},
+	{{end -}}
+	{{if .IsPointer -}}
+		{{.FieldName}}: &body,
+	{{else -}}
+		{{.FieldName}}: bytes.NewReader(body),
+	{{end -}}
+	}
+	return &{{$.BuilderTypeName}}{
+		handler: s,
+		req:     req,
+		{{if .RequiresContentType -}}
+		rawBody: bytes.NewReader(body),
+		{{end -}}
+		opts:    opts,
+	}
+}
+{{end -}}
+{{end}}
+
+{{define "expectWithoutBody"}}
+func (s *TestHandler) Expect{{.OperationID}}(
+{{range .PathParams -}}
+	{{.GoVariableName}} {{.TypeDef}},
+{{end -}}
+{{if .HasQueryParams -}}
+	queryParams *{{.QueryParamsType}},
+{{end -}}
+	opts ...ExpectOption,
+) *{{$.BuilderTypeName}} {
+	req := {{.RequestType}}{
+	{{range .PathParams -}}
+		{{.GoName}}: {{.GoVariableName}},
+	{{end -}}
+	}
+	{{if .HasQueryParams -}}
+	if queryParams != nil {
+		req.Params = *queryParams
+	}
+	{{end -}}
+	return &{{.BuilderTypeName}}{
+		handler: s,
+		req:     req,
+		opts:    opts,
+	}
+}
+{{end}}

@@ -1,6 +1,7 @@
 package metatest
 
 import (
+	"bytes"
 	"context"
 	"net/http/httptest"
 	"testing"
@@ -32,14 +33,8 @@ func TestGeneratedHandler(t *testing.T) {
 		}
 
 		// Expect the same request twice
-		handler.ExpectGetPetById(
-			petstoretest.GetPetByIdRequestObject{PetId: 1},
-			petstoretest.GetPetById200JSONResponse(*pet),
-		)
-		handler.ExpectGetPetById(
-			petstoretest.GetPetByIdRequestObject{PetId: 1},
-			petstoretest.GetPetById200JSONResponse(*pet),
-		)
+		handler.ExpectGetPetById(1).RespondJSON200(petstoretest.GetPetById200JSONResponse(*pet))
+		handler.ExpectGetPetById(1).RespondJSON200(petstoretest.GetPetById200JSONResponse(*pet))
 
 		// Make two calls with the same parameters
 		resp1, err := client.GetPetByIdWithResponse(context.Background(), 1)
@@ -75,14 +70,8 @@ func TestGeneratedHandler(t *testing.T) {
 			},
 		}
 
-		handler.ExpectGetPetById(
-			petstoretest.GetPetByIdRequestObject{PetId: 1},
-			petstoretest.GetPetById200JSONResponse(*marco),
-		)
-		handler.ExpectGetPetById(
-			petstoretest.GetPetByIdRequestObject{PetId: 2},
-			petstoretest.GetPetById200JSONResponse(*dolly),
-		)
+		handler.ExpectGetPetById(1).RespondJSON200(petstoretest.GetPetById200JSONResponse(*marco))
+		handler.ExpectGetPetById(2).RespondJSON200(petstoretest.GetPetById200JSONResponse(*dolly))
 
 		resp1, err := client.GetPetByIdWithResponse(context.Background(), 1)
 		require.NoError(t, err)
@@ -115,12 +104,7 @@ func TestGeneratedHandler(t *testing.T) {
 			UpdatedAt:      &updatedAt,
 		}
 
-		handler.ExpectGetPetRegistration(
-			petstoretest.GetPetRegistrationRequestObject{
-				PetId: 1,
-			},
-			petstoretest.GetPetRegistration200JSONResponse(petWithCustomTypes),
-		)
+		handler.ExpectGetPetRegistration(1).RespondJSON200(petstoretest.GetPetRegistration200JSONResponse(petWithCustomTypes))
 
 		resp, err := client.GetPetRegistrationWithResponse(context.Background(), 1)
 		require.NoError(t, err)
@@ -145,12 +129,7 @@ func TestGeneratedHandler(t *testing.T) {
 			"weight": "30kg",
 		}
 
-		handler.ExpectGetPetMetadata(
-			petstoretest.GetPetMetadataRequestObject{
-				PetId: 1,
-			},
-			petstoretest.GetPetMetadata200JSONResponse(metadata),
-		)
+		handler.ExpectGetPetMetadata(1, nil).RespondJSON200(petstoretest.GetPetMetadata200JSONResponse(metadata))
 
 		resp, err := client.GetPetMetadataWithResponse(context.Background(), 1, nil)
 		require.NoError(t, err)
@@ -181,19 +160,11 @@ func TestGeneratedHandler(t *testing.T) {
 		}
 
 		// Test multiple different operations on the same handler
-		handler.ExpectGetPetById(
-			petstoretest.GetPetByIdRequestObject{PetId: 1},
-			petstoretest.GetPetById200JSONResponse(*marco),
-		)
+		handler.ExpectGetPetById(1).RespondJSON200(petstoretest.GetPetById200JSONResponse(*marco))
 
-		handler.ExpectFindPetsByStatus(
-			petstoretest.FindPetsByStatusRequestObject{
-				Params: petstoretest.FindPetsByStatusParams{
-					Status: petstoretest.FindPetsByStatusParamsStatusAvailable,
-				},
-			},
-			petstoretest.FindPetsByStatus200JSONResponse([]petstoretest.Pet{*dolly}),
-		)
+		handler.ExpectFindPetsByStatus(&petstoretest.FindPetsByStatusParams{
+			Status: petstoretest.FindPetsByStatusParamsStatusAvailable,
+		}).RespondJSON200(petstoretest.FindPetsByStatus200JSONResponse([]petstoretest.Pet{*dolly}))
 
 		// Call GetPetById
 		resp1, err := client.GetPetByIdWithResponse(context.Background(), 1)
@@ -230,11 +201,7 @@ func TestGeneratedHandler(t *testing.T) {
 		}
 
 		// Expect the same request 3 times
-		handler.ExpectGetPetById(
-			petstoretest.GetPetByIdRequestObject{PetId: 1},
-			petstoretest.GetPetById200JSONResponse(*pet),
-			petstoretest.Times(3),
-		)
+		handler.ExpectGetPetById(1, petstoretest.Times(3)).RespondJSON200(petstoretest.GetPetById200JSONResponse(*pet))
 
 		// Make three calls
 		for i := 0; i < 3; i++ {
@@ -242,6 +209,77 @@ func TestGeneratedHandler(t *testing.T) {
 			require.NoError(t, callErr)
 			require.Equal(t, 200, resp.StatusCode())
 		}
+	})
+
+	t.Run("WithBody method - generic body with []byte", func(t *testing.T) {
+		handler := petstoretest.NewTestHandler(t)
+		server := httptest.NewServer(handler)
+		defer server.Close()
+
+		client, err := oapi.NewClientWithResponses(server.URL)
+		require.NoError(t, err)
+
+		// XML body content
+		xmlBody := []byte(`<Pet><id>1</id><name>Fluffy</name><status>available</status></Pet>`)
+
+		// Set expectation using WithBody method
+		handler.ExpectAddPetWithBody("application/xml", xmlBody).RespondJSON201(petstoretest.AddPet201JSONResponse{
+			Id:     ptr(int32(1)),
+			Name:   "Fluffy",
+			Status: ptr(petstoretest.PetStatusAvailable),
+		})
+
+		// Make request with XML body
+		resp, err := client.AddPetWithBodyWithResponse(
+			context.Background(),
+			"application/xml",
+			bytes.NewReader(xmlBody),
+		)
+		require.NoError(t, err)
+		require.Equal(t, 201, resp.StatusCode())
+		require.NotNil(t, resp.JSON201)
+		require.Equal(t, "Fluffy", resp.JSON201.Name)
+	})
+
+	t.Run("WithBody vs typed body methods", func(t *testing.T) {
+		handler := petstoretest.NewTestHandler(t)
+		server := httptest.NewServer(handler)
+		defer server.Close()
+
+		client, err := oapi.NewClientWithResponses(server.URL)
+		require.NoError(t, err)
+
+		// Set up expectation using typed method
+		handler.ExpectUpdateUser("john", petstoretest.UpdateUserJSONRequestBody{
+			Id:       ptr(int64(1)),
+			Username: ptr("john"),
+		}).Respond200()
+
+		// Set up expectation using WithBody method
+		xmlBody := []byte(`<User><id>1</id><username>john</username></User>`)
+		handler.ExpectUpdateUserWithBody("john", "application/xml", xmlBody).Respond200()
+
+		// Make request using typed JSON method
+		resp1, err := client.UpdateUserWithResponse(
+			context.Background(),
+			"john",
+			oapi.UpdateUserJSONRequestBody{
+				Id:       ptr(int64(1)),
+				Username: ptr("john"),
+			},
+		)
+		require.NoError(t, err)
+		require.Equal(t, 200, resp1.StatusCode())
+
+		// Make request using generic WithBody method
+		resp2, err := client.UpdateUserWithBodyWithResponse(
+			context.Background(),
+			"john",
+			"application/xml",
+			bytes.NewReader(xmlBody),
+		)
+		require.NoError(t, err)
+		require.Equal(t, 200, resp2.StatusCode())
 	})
 }
 
@@ -256,13 +294,10 @@ func TestFailureScenarios(t *testing.T) {
 		defer server.Close()
 
 		// Set an expectation but never make the call
-		handler.ExpectGetPetById(
-			petstoretest.GetPetByIdRequestObject{PetId: 1},
-			petstoretest.GetPetById200JSONResponse{
-				Id:   ptr(int32(1)),
-				Name: "Marco",
-			},
-		)
+		handler.ExpectGetPetById(1).RespondJSON200(petstoretest.GetPetById200JSONResponse{
+			Id:   ptr(int32(1)),
+			Name: "Marco",
+		})
 
 		// Run cleanups which should report the unmet expectation
 		tb.RunCleanups()
@@ -297,14 +332,10 @@ func TestFailureScenarios(t *testing.T) {
 		client, err := oapi.NewClientWithResponses(server.URL)
 		require.NoError(t, err)
 
-		handler.ExpectGetPetById(
-			petstoretest.GetPetByIdRequestObject{PetId: 1},
-			petstoretest.GetPetById200JSONResponse{
-				Id:   ptr(int32(1)),
-				Name: "Marco",
-			},
-			petstoretest.Times(1),
-		)
+		handler.ExpectGetPetById(1, petstoretest.Times(1)).RespondJSON200(petstoretest.GetPetById200JSONResponse{
+			Id:   ptr(int32(1)),
+			Name: "Marco",
+		})
 
 		// Make the expected call
 		resp, err := client.GetPetByIdWithResponse(context.Background(), 1)
@@ -329,14 +360,10 @@ func TestFailureScenarios(t *testing.T) {
 		require.NoError(t, err)
 
 		// Set expectation for 3 calls
-		handler.ExpectGetPetById(
-			petstoretest.GetPetByIdRequestObject{PetId: 1},
-			petstoretest.GetPetById200JSONResponse{
-				Id:   ptr(int32(1)),
-				Name: "Marco",
-			},
-			petstoretest.Times(3),
-		)
+		handler.ExpectGetPetById(1, petstoretest.Times(3)).RespondJSON200(petstoretest.GetPetById200JSONResponse{
+			Id:   ptr(int32(1)),
+			Name: "Marco",
+		})
 
 		// Only make 2 calls
 		for i := 0; i < 2; i++ {
@@ -362,11 +389,7 @@ func TestFailureScenarios(t *testing.T) {
 
 		// Set an expectation that returns an error
 		// When the handler returns an error, the StrictHandler converts it to HTTP 500
-		handler.ExpectGetPetById(
-			petstoretest.GetPetByIdRequestObject{PetId: 1},
-			petstoretest.GetPetById200JSONResponse{},
-			petstoretest.WithError(assert.AnError),
-		)
+		handler.ExpectGetPetById(1).RespondWithError(assert.AnError)
 
 		// The HTTP request succeeds but gets a 500 Internal Server Error status
 		resp, err := client.GetPetByIdWithResponse(context.Background(), 1)
