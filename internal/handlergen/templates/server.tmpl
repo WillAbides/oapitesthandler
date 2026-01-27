@@ -1,0 +1,19 @@
+package {{.PackageName}}
+
+import (
+	"context"
+)
+
+type testServer struct {
+	tb     TB
+	handler *TestHandler
+}
+{{range .Operations}}
+func (t *testServer) {{.OperationID}}(_ context.Context, req {{.RequestType}}) ({{.ResponseType}}, error) {
+	{{if .HasGenericBody -}}
+	return t.handler.{{.ExpectationField}}.getResponse(t.tb, req, req.Body)
+	{{else -}}
+	return t.handler.{{.ExpectationField}}.getResponse(t.tb, req, nil)
+	{{end -}}
+}
+{{end}}

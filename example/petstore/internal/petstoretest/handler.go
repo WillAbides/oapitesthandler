@@ -3,6 +3,8 @@
 package petstoretest
 
 import (
+	"bytes"
+	"io"
 	"net/http"
 )
 
@@ -11,28 +13,28 @@ type TestHandler struct {
 
 	handler http.Handler
 
-	addPetExpectations                   expectations[AddPetRequestObject, AddPetResponseObject]
-	updatePetExpectations                expectations[UpdatePetRequestObject, UpdatePetResponseObject]
-	findPetsByStatusExpectations         expectations[FindPetsByStatusRequestObject, FindPetsByStatusResponseObject]
-	findPetsByTagsExpectations           expectations[FindPetsByTagsRequestObject, FindPetsByTagsResponseObject]
-	deletePetExpectations                expectations[DeletePetRequestObject, DeletePetResponseObject]
-	getPetByIdExpectations               expectations[GetPetByIdRequestObject, GetPetByIdResponseObject]
-	updatePetWithFormExpectations        expectations[UpdatePetWithFormRequestObject, UpdatePetWithFormResponseObject]
-	getPetMetadataExpectations           expectations[GetPetMetadataRequestObject, GetPetMetadataResponseObject]
-	getPetPhotoByIdExpectations          expectations[GetPetPhotoByIdRequestObject, GetPetPhotoByIdResponseObject]
-	getPetRegistrationExpectations       expectations[GetPetRegistrationRequestObject, GetPetRegistrationResponseObject]
-	uploadFileExpectations               expectations[UploadFileRequestObject, UploadFileResponseObject]
-	getStoreInventoryExpectations        expectations[GetStoreInventoryRequestObject, GetStoreInventoryResponseObject]
-	postStoreOrderExpectations           expectations[PostStoreOrderRequestObject, PostStoreOrderResponseObject]
-	deleteOrderExpectations              expectations[DeleteOrderRequestObject, DeleteOrderResponseObject]
-	getOrderByIdExpectations             expectations[GetOrderByIdRequestObject, GetOrderByIdResponseObject]
-	createUserExpectations               expectations[CreateUserRequestObject, CreateUserResponseObject]
-	createUsersWithListInputExpectations expectations[CreateUsersWithListInputRequestObject, CreateUsersWithListInputResponseObject]
-	loginUserExpectations                expectations[LoginUserRequestObject, LoginUserResponseObject]
-	logoutUserExpectations               expectations[LogoutUserRequestObject, LogoutUserResponseObject]
-	deleteUserExpectations               expectations[DeleteUserRequestObject, DeleteUserResponseObject]
-	getUserByNameExpectations            expectations[GetUserByNameRequestObject, GetUserByNameResponseObject]
-	updateUserExpectations               expectations[UpdateUserRequestObject, UpdateUserResponseObject]
+	addPetExpectResponses                   expectResponses[AddPetRequestObject, AddPetResponseObject]
+	updatePetExpectResponses                expectResponses[UpdatePetRequestObject, UpdatePetResponseObject]
+	findPetsByStatusExpectResponses         expectResponses[FindPetsByStatusRequestObject, FindPetsByStatusResponseObject]
+	findPetsByTagsExpectResponses           expectResponses[FindPetsByTagsRequestObject, FindPetsByTagsResponseObject]
+	deletePetExpectResponses                expectResponses[DeletePetRequestObject, DeletePetResponseObject]
+	getPetByIdExpectResponses               expectResponses[GetPetByIdRequestObject, GetPetByIdResponseObject]
+	updatePetWithFormExpectResponses        expectResponses[UpdatePetWithFormRequestObject, UpdatePetWithFormResponseObject]
+	getPetMetadataExpectResponses           expectResponses[GetPetMetadataRequestObject, GetPetMetadataResponseObject]
+	getPetPhotoByIdExpectResponses          expectResponses[GetPetPhotoByIdRequestObject, GetPetPhotoByIdResponseObject]
+	getPetRegistrationExpectResponses       expectResponses[GetPetRegistrationRequestObject, GetPetRegistrationResponseObject]
+	uploadFileExpectResponses               expectResponses[UploadFileRequestObject, UploadFileResponseObject]
+	getStoreInventoryExpectResponses        expectResponses[GetStoreInventoryRequestObject, GetStoreInventoryResponseObject]
+	postStoreOrderExpectResponses           expectResponses[PostStoreOrderRequestObject, PostStoreOrderResponseObject]
+	deleteOrderExpectResponses              expectResponses[DeleteOrderRequestObject, DeleteOrderResponseObject]
+	getOrderByIdExpectResponses             expectResponses[GetOrderByIdRequestObject, GetOrderByIdResponseObject]
+	createUserExpectResponses               expectResponses[CreateUserRequestObject, CreateUserResponseObject]
+	createUsersWithListInputExpectResponses expectResponses[CreateUsersWithListInputRequestObject, CreateUsersWithListInputResponseObject]
+	loginUserExpectResponses                expectResponses[LoginUserRequestObject, LoginUserResponseObject]
+	logoutUserExpectResponses               expectResponses[LogoutUserRequestObject, LogoutUserResponseObject]
+	deleteUserExpectResponses               expectResponses[DeleteUserRequestObject, DeleteUserResponseObject]
+	getUserByNameExpectResponses            expectResponses[GetUserByNameRequestObject, GetUserByNameResponseObject]
+	updateUserExpectResponses               expectResponses[UpdateUserRequestObject, UpdateUserResponseObject]
 }
 
 func (s *TestHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -46,178 +48,1052 @@ func NewTestHandler(tb TB) *TestHandler {
 	return th
 }
 
+type AddPetExpectation struct {
+	handler *TestHandler
+	req     AddPetRequestObject
+	rawBody io.Reader
+	opts    []ExpectOption
+}
+
+// RespondJSON201 sets the expectation to return a 201 response with JSON content.
+func (b *AddPetExpectation) RespondJSON201(resp AddPet201JSONResponse) {
+	b.handler.addPetExpectResponses.expect(b.handler.tb, b.req, b.rawBody, resp, b.opts...)
+}
+
+// Respond400 sets the expectation to return a 400 response.
+func (b *AddPetExpectation) Respond400() {
+	var resp AddPet400Response
+	b.handler.addPetExpectResponses.expect(b.handler.tb, b.req, b.rawBody, resp, b.opts...)
+}
+
+// Respond422 sets the expectation to return a 422 response.
+func (b *AddPetExpectation) Respond422() {
+	var resp AddPet422Response
+	b.handler.addPetExpectResponses.expect(b.handler.tb, b.req, b.rawBody, resp, b.opts...)
+}
+
+// RespondWithError sets the expectation to return an error instead of a response.
+func (b *AddPetExpectation) RespondWithError(err error) {
+	var zeroResp AddPetResponseObject
+	b.handler.addPetExpectResponses.expect(b.handler.tb, b.req, b.rawBody, zeroResp, append(b.opts, WithError(err))...)
+}
+
+type UpdatePetExpectation struct {
+	handler *TestHandler
+	req     UpdatePetRequestObject
+	rawBody io.Reader
+	opts    []ExpectOption
+}
+
+// RespondJSON200 sets the expectation to return a 200 response with JSON content.
+func (b *UpdatePetExpectation) RespondJSON200(resp UpdatePet200JSONResponse) {
+	b.handler.updatePetExpectResponses.expect(b.handler.tb, b.req, b.rawBody, resp, b.opts...)
+}
+
+// RespondJSON400 sets the expectation to return a 400 response with JSON content.
+func (b *UpdatePetExpectation) RespondJSON400(resp UpdatePet400JSONResponse) {
+	b.handler.updatePetExpectResponses.expect(b.handler.tb, b.req, b.rawBody, resp, b.opts...)
+}
+
+// RespondJSON404 sets the expectation to return a 404 response with JSON content.
+func (b *UpdatePetExpectation) RespondJSON404(resp UpdatePet404JSONResponse) {
+	b.handler.updatePetExpectResponses.expect(b.handler.tb, b.req, b.rawBody, resp, b.opts...)
+}
+
+// RespondJSON422 sets the expectation to return a 422 response with JSON content.
+func (b *UpdatePetExpectation) RespondJSON422(resp UpdatePet422JSONResponse) {
+	b.handler.updatePetExpectResponses.expect(b.handler.tb, b.req, b.rawBody, resp, b.opts...)
+}
+
+// RespondWithError sets the expectation to return an error instead of a response.
+func (b *UpdatePetExpectation) RespondWithError(err error) {
+	var zeroResp UpdatePetResponseObject
+	b.handler.updatePetExpectResponses.expect(b.handler.tb, b.req, b.rawBody, zeroResp, append(b.opts, WithError(err))...)
+}
+
+type FindPetsByStatusExpectation struct {
+	handler *TestHandler
+	req     FindPetsByStatusRequestObject
+	opts    []ExpectOption
+}
+
+// RespondJSON200 sets the expectation to return a 200 response with JSON content.
+func (b *FindPetsByStatusExpectation) RespondJSON200(resp FindPetsByStatus200JSONResponse) {
+	b.handler.findPetsByStatusExpectResponses.expect(b.handler.tb, b.req, nil, resp, b.opts...)
+}
+
+// Respond400 sets the expectation to return a 400 response.
+func (b *FindPetsByStatusExpectation) Respond400() {
+	var resp FindPetsByStatus400Response
+	b.handler.findPetsByStatusExpectResponses.expect(b.handler.tb, b.req, nil, resp, b.opts...)
+}
+
+// RespondWithError sets the expectation to return an error instead of a response.
+func (b *FindPetsByStatusExpectation) RespondWithError(err error) {
+	var zeroResp FindPetsByStatusResponseObject
+	b.handler.findPetsByStatusExpectResponses.expect(b.handler.tb, b.req, nil, zeroResp, append(b.opts, WithError(err))...)
+}
+
+type FindPetsByTagsExpectation struct {
+	handler *TestHandler
+	req     FindPetsByTagsRequestObject
+	opts    []ExpectOption
+}
+
+// RespondJSON200 sets the expectation to return a 200 response with JSON content.
+func (b *FindPetsByTagsExpectation) RespondJSON200(resp FindPetsByTags200JSONResponse) {
+	b.handler.findPetsByTagsExpectResponses.expect(b.handler.tb, b.req, nil, resp, b.opts...)
+}
+
+// Respond400 sets the expectation to return a 400 response.
+func (b *FindPetsByTagsExpectation) Respond400() {
+	var resp FindPetsByTags400Response
+	b.handler.findPetsByTagsExpectResponses.expect(b.handler.tb, b.req, nil, resp, b.opts...)
+}
+
+// RespondWithError sets the expectation to return an error instead of a response.
+func (b *FindPetsByTagsExpectation) RespondWithError(err error) {
+	var zeroResp FindPetsByTagsResponseObject
+	b.handler.findPetsByTagsExpectResponses.expect(b.handler.tb, b.req, nil, zeroResp, append(b.opts, WithError(err))...)
+}
+
+type DeletePetExpectation struct {
+	handler *TestHandler
+	req     DeletePetRequestObject
+	opts    []ExpectOption
+}
+
+// RespondJSON200 sets the expectation to return a 200 response with JSON content.
+func (b *DeletePetExpectation) RespondJSON200(resp DeletePet200JSONResponse) {
+	b.handler.deletePetExpectResponses.expect(b.handler.tb, b.req, nil, resp, b.opts...)
+}
+
+// Respond204 sets the expectation to return a 204 response.
+func (b *DeletePetExpectation) Respond204() {
+	var resp DeletePet204Response
+	b.handler.deletePetExpectResponses.expect(b.handler.tb, b.req, nil, resp, b.opts...)
+}
+
+// RespondJSON400 sets the expectation to return a 400 response with JSON content.
+func (b *DeletePetExpectation) RespondJSON400(resp DeletePet400JSONResponse) {
+	b.handler.deletePetExpectResponses.expect(b.handler.tb, b.req, nil, resp, b.opts...)
+}
+
+// RespondJSON404 sets the expectation to return a 404 response with JSON content.
+func (b *DeletePetExpectation) RespondJSON404(resp DeletePet404JSONResponse) {
+	b.handler.deletePetExpectResponses.expect(b.handler.tb, b.req, nil, resp, b.opts...)
+}
+
+// RespondWithError sets the expectation to return an error instead of a response.
+func (b *DeletePetExpectation) RespondWithError(err error) {
+	var zeroResp DeletePetResponseObject
+	b.handler.deletePetExpectResponses.expect(b.handler.tb, b.req, nil, zeroResp, append(b.opts, WithError(err))...)
+}
+
+type GetPetByIdExpectation struct {
+	handler *TestHandler
+	req     GetPetByIdRequestObject
+	opts    []ExpectOption
+}
+
+// RespondJSON200 sets the expectation to return a 200 response with JSON content.
+func (b *GetPetByIdExpectation) RespondJSON200(resp GetPetById200JSONResponse) {
+	b.handler.getPetByIdExpectResponses.expect(b.handler.tb, b.req, nil, resp, b.opts...)
+}
+
+// RespondApplicationVndPetstorePlusJSON200 sets the expectation to return a 200 response with ApplicationVndPetstorePlusJSON content.
+func (b *GetPetByIdExpectation) RespondApplicationVndPetstorePlusJSON200(resp GetPetById200ApplicationVndPetstorePlusJSONResponse) {
+	b.handler.getPetByIdExpectResponses.expect(b.handler.tb, b.req, nil, resp, b.opts...)
+}
+
+// RespondJSON400 sets the expectation to return a 400 response with JSON content.
+func (b *GetPetByIdExpectation) RespondJSON400(resp GetPetById400JSONResponse) {
+	b.handler.getPetByIdExpectResponses.expect(b.handler.tb, b.req, nil, resp, b.opts...)
+}
+
+// RespondJSON404 sets the expectation to return a 404 response with JSON content.
+func (b *GetPetByIdExpectation) RespondJSON404(resp GetPetById404JSONResponse) {
+	b.handler.getPetByIdExpectResponses.expect(b.handler.tb, b.req, nil, resp, b.opts...)
+}
+
+// RespondWithError sets the expectation to return an error instead of a response.
+func (b *GetPetByIdExpectation) RespondWithError(err error) {
+	var zeroResp GetPetByIdResponseObject
+	b.handler.getPetByIdExpectResponses.expect(b.handler.tb, b.req, nil, zeroResp, append(b.opts, WithError(err))...)
+}
+
+type UpdatePetWithFormExpectation struct {
+	handler *TestHandler
+	req     UpdatePetWithFormRequestObject
+	opts    []ExpectOption
+}
+
+// RespondJSON200 sets the expectation to return a 200 response with JSON content.
+func (b *UpdatePetWithFormExpectation) RespondJSON200(resp UpdatePetWithForm200JSONResponse) {
+	b.handler.updatePetWithFormExpectResponses.expect(b.handler.tb, b.req, nil, resp, b.opts...)
+}
+
+// Respond400 sets the expectation to return a 400 response.
+func (b *UpdatePetWithFormExpectation) Respond400() {
+	var resp UpdatePetWithForm400Response
+	b.handler.updatePetWithFormExpectResponses.expect(b.handler.tb, b.req, nil, resp, b.opts...)
+}
+
+// RespondWithError sets the expectation to return an error instead of a response.
+func (b *UpdatePetWithFormExpectation) RespondWithError(err error) {
+	var zeroResp UpdatePetWithFormResponseObject
+	b.handler.updatePetWithFormExpectResponses.expect(b.handler.tb, b.req, nil, zeroResp, append(b.opts, WithError(err))...)
+}
+
+type GetPetMetadataExpectation struct {
+	handler *TestHandler
+	req     GetPetMetadataRequestObject
+	opts    []ExpectOption
+}
+
+// RespondJSON200 sets the expectation to return a 200 response with JSON content.
+func (b *GetPetMetadataExpectation) RespondJSON200(resp GetPetMetadata200JSONResponse) {
+	b.handler.getPetMetadataExpectResponses.expect(b.handler.tb, b.req, nil, resp, b.opts...)
+}
+
+// Respond204 sets the expectation to return a 204 response.
+func (b *GetPetMetadataExpectation) Respond204() {
+	var resp GetPetMetadata204Response
+	b.handler.getPetMetadataExpectResponses.expect(b.handler.tb, b.req, nil, resp, b.opts...)
+}
+
+// RespondJSON404 sets the expectation to return a 404 response with JSON content.
+func (b *GetPetMetadataExpectation) RespondJSON404(resp GetPetMetadata404JSONResponse) {
+	b.handler.getPetMetadataExpectResponses.expect(b.handler.tb, b.req, nil, resp, b.opts...)
+}
+
+// RespondWithError sets the expectation to return an error instead of a response.
+func (b *GetPetMetadataExpectation) RespondWithError(err error) {
+	var zeroResp GetPetMetadataResponseObject
+	b.handler.getPetMetadataExpectResponses.expect(b.handler.tb, b.req, nil, zeroResp, append(b.opts, WithError(err))...)
+}
+
+type GetPetPhotoByIdExpectation struct {
+	handler *TestHandler
+	req     GetPetPhotoByIdRequestObject
+	opts    []ExpectOption
+}
+
+// RespondJSON200 sets the expectation to return a 200 response with JSON content.
+func (b *GetPetPhotoByIdExpectation) RespondJSON200(resp GetPetPhotoById200JSONResponse) {
+	b.handler.getPetPhotoByIdExpectResponses.expect(b.handler.tb, b.req, nil, resp, b.opts...)
+}
+
+// RespondJSON404 sets the expectation to return a 404 response with JSON content.
+func (b *GetPetPhotoByIdExpectation) RespondJSON404(resp GetPetPhotoById404JSONResponse) {
+	b.handler.getPetPhotoByIdExpectResponses.expect(b.handler.tb, b.req, nil, resp, b.opts...)
+}
+
+// RespondWithError sets the expectation to return an error instead of a response.
+func (b *GetPetPhotoByIdExpectation) RespondWithError(err error) {
+	var zeroResp GetPetPhotoByIdResponseObject
+	b.handler.getPetPhotoByIdExpectResponses.expect(b.handler.tb, b.req, nil, zeroResp, append(b.opts, WithError(err))...)
+}
+
+type GetPetRegistrationExpectation struct {
+	handler *TestHandler
+	req     GetPetRegistrationRequestObject
+	opts    []ExpectOption
+}
+
+// RespondJSON200 sets the expectation to return a 200 response with JSON content.
+func (b *GetPetRegistrationExpectation) RespondJSON200(resp GetPetRegistration200JSONResponse) {
+	b.handler.getPetRegistrationExpectResponses.expect(b.handler.tb, b.req, nil, resp, b.opts...)
+}
+
+// RespondJSON404 sets the expectation to return a 404 response with JSON content.
+func (b *GetPetRegistrationExpectation) RespondJSON404(resp GetPetRegistration404JSONResponse) {
+	b.handler.getPetRegistrationExpectResponses.expect(b.handler.tb, b.req, nil, resp, b.opts...)
+}
+
+// RespondWithError sets the expectation to return an error instead of a response.
+func (b *GetPetRegistrationExpectation) RespondWithError(err error) {
+	var zeroResp GetPetRegistrationResponseObject
+	b.handler.getPetRegistrationExpectResponses.expect(b.handler.tb, b.req, nil, zeroResp, append(b.opts, WithError(err))...)
+}
+
+type UploadFileExpectation struct {
+	handler *TestHandler
+	req     UploadFileRequestObject
+	rawBody io.Reader
+	opts    []ExpectOption
+}
+
+// RespondJSON200 sets the expectation to return a 200 response with JSON content.
+func (b *UploadFileExpectation) RespondJSON200(resp UploadFile200JSONResponse) {
+	b.handler.uploadFileExpectResponses.expect(b.handler.tb, b.req, b.rawBody, resp, b.opts...)
+}
+
+// Respond400 sets the expectation to return a 400 response.
+func (b *UploadFileExpectation) Respond400() {
+	var resp UploadFile400Response
+	b.handler.uploadFileExpectResponses.expect(b.handler.tb, b.req, b.rawBody, resp, b.opts...)
+}
+
+// Respond404 sets the expectation to return a 404 response.
+func (b *UploadFileExpectation) Respond404() {
+	var resp UploadFile404Response
+	b.handler.uploadFileExpectResponses.expect(b.handler.tb, b.req, b.rawBody, resp, b.opts...)
+}
+
+// RespondWithError sets the expectation to return an error instead of a response.
+func (b *UploadFileExpectation) RespondWithError(err error) {
+	var zeroResp UploadFileResponseObject
+	b.handler.uploadFileExpectResponses.expect(b.handler.tb, b.req, b.rawBody, zeroResp, append(b.opts, WithError(err))...)
+}
+
+type GetStoreInventoryExpectation struct {
+	handler *TestHandler
+	req     GetStoreInventoryRequestObject
+	opts    []ExpectOption
+}
+
+// RespondJSON200 sets the expectation to return a 200 response with JSON content.
+func (b *GetStoreInventoryExpectation) RespondJSON200(resp GetStoreInventory200JSONResponse) {
+	b.handler.getStoreInventoryExpectResponses.expect(b.handler.tb, b.req, nil, resp, b.opts...)
+}
+
+// RespondWithError sets the expectation to return an error instead of a response.
+func (b *GetStoreInventoryExpectation) RespondWithError(err error) {
+	var zeroResp GetStoreInventoryResponseObject
+	b.handler.getStoreInventoryExpectResponses.expect(b.handler.tb, b.req, nil, zeroResp, append(b.opts, WithError(err))...)
+}
+
+type PostStoreOrderExpectation struct {
+	handler *TestHandler
+	req     PostStoreOrderRequestObject
+	rawBody io.Reader
+	opts    []ExpectOption
+}
+
+// RespondJSON200 sets the expectation to return a 200 response with JSON content.
+func (b *PostStoreOrderExpectation) RespondJSON200(resp PostStoreOrder200JSONResponse) {
+	b.handler.postStoreOrderExpectResponses.expect(b.handler.tb, b.req, b.rawBody, resp, b.opts...)
+}
+
+// Respond400 sets the expectation to return a 400 response.
+func (b *PostStoreOrderExpectation) Respond400() {
+	var resp PostStoreOrder400Response
+	b.handler.postStoreOrderExpectResponses.expect(b.handler.tb, b.req, b.rawBody, resp, b.opts...)
+}
+
+// Respond422 sets the expectation to return a 422 response.
+func (b *PostStoreOrderExpectation) Respond422() {
+	var resp PostStoreOrder422Response
+	b.handler.postStoreOrderExpectResponses.expect(b.handler.tb, b.req, b.rawBody, resp, b.opts...)
+}
+
+// RespondWithError sets the expectation to return an error instead of a response.
+func (b *PostStoreOrderExpectation) RespondWithError(err error) {
+	var zeroResp PostStoreOrderResponseObject
+	b.handler.postStoreOrderExpectResponses.expect(b.handler.tb, b.req, b.rawBody, zeroResp, append(b.opts, WithError(err))...)
+}
+
+type DeleteOrderExpectation struct {
+	handler *TestHandler
+	req     DeleteOrderRequestObject
+	opts    []ExpectOption
+}
+
+// Respond200 sets the expectation to return a 200 response.
+func (b *DeleteOrderExpectation) Respond200() {
+	var resp DeleteOrder200Response
+	b.handler.deleteOrderExpectResponses.expect(b.handler.tb, b.req, nil, resp, b.opts...)
+}
+
+// Respond400 sets the expectation to return a 400 response.
+func (b *DeleteOrderExpectation) Respond400() {
+	var resp DeleteOrder400Response
+	b.handler.deleteOrderExpectResponses.expect(b.handler.tb, b.req, nil, resp, b.opts...)
+}
+
+// Respond404 sets the expectation to return a 404 response.
+func (b *DeleteOrderExpectation) Respond404() {
+	var resp DeleteOrder404Response
+	b.handler.deleteOrderExpectResponses.expect(b.handler.tb, b.req, nil, resp, b.opts...)
+}
+
+// RespondWithError sets the expectation to return an error instead of a response.
+func (b *DeleteOrderExpectation) RespondWithError(err error) {
+	var zeroResp DeleteOrderResponseObject
+	b.handler.deleteOrderExpectResponses.expect(b.handler.tb, b.req, nil, zeroResp, append(b.opts, WithError(err))...)
+}
+
+type GetOrderByIdExpectation struct {
+	handler *TestHandler
+	req     GetOrderByIdRequestObject
+	opts    []ExpectOption
+}
+
+// RespondJSON200 sets the expectation to return a 200 response with JSON content.
+func (b *GetOrderByIdExpectation) RespondJSON200(resp GetOrderById200JSONResponse) {
+	b.handler.getOrderByIdExpectResponses.expect(b.handler.tb, b.req, nil, resp, b.opts...)
+}
+
+// Respond400 sets the expectation to return a 400 response.
+func (b *GetOrderByIdExpectation) Respond400() {
+	var resp GetOrderById400Response
+	b.handler.getOrderByIdExpectResponses.expect(b.handler.tb, b.req, nil, resp, b.opts...)
+}
+
+// Respond404 sets the expectation to return a 404 response.
+func (b *GetOrderByIdExpectation) Respond404() {
+	var resp GetOrderById404Response
+	b.handler.getOrderByIdExpectResponses.expect(b.handler.tb, b.req, nil, resp, b.opts...)
+}
+
+// RespondWithError sets the expectation to return an error instead of a response.
+func (b *GetOrderByIdExpectation) RespondWithError(err error) {
+	var zeroResp GetOrderByIdResponseObject
+	b.handler.getOrderByIdExpectResponses.expect(b.handler.tb, b.req, nil, zeroResp, append(b.opts, WithError(err))...)
+}
+
+type CreateUserExpectation struct {
+	handler *TestHandler
+	req     CreateUserRequestObject
+	rawBody io.Reader
+	opts    []ExpectOption
+}
+
+// RespondJSON200 sets the expectation to return a 200 response with JSON content.
+func (b *CreateUserExpectation) RespondJSON200(resp CreateUser200JSONResponse) {
+	b.handler.createUserExpectResponses.expect(b.handler.tb, b.req, b.rawBody, resp, b.opts...)
+}
+
+// RespondWithError sets the expectation to return an error instead of a response.
+func (b *CreateUserExpectation) RespondWithError(err error) {
+	var zeroResp CreateUserResponseObject
+	b.handler.createUserExpectResponses.expect(b.handler.tb, b.req, b.rawBody, zeroResp, append(b.opts, WithError(err))...)
+}
+
+type CreateUsersWithListInputExpectation struct {
+	handler *TestHandler
+	req     CreateUsersWithListInputRequestObject
+	opts    []ExpectOption
+}
+
+// RespondJSON200 sets the expectation to return a 200 response with JSON content.
+func (b *CreateUsersWithListInputExpectation) RespondJSON200(resp CreateUsersWithListInput200JSONResponse) {
+	b.handler.createUsersWithListInputExpectResponses.expect(b.handler.tb, b.req, nil, resp, b.opts...)
+}
+
+// RespondWithError sets the expectation to return an error instead of a response.
+func (b *CreateUsersWithListInputExpectation) RespondWithError(err error) {
+	var zeroResp CreateUsersWithListInputResponseObject
+	b.handler.createUsersWithListInputExpectResponses.expect(b.handler.tb, b.req, nil, zeroResp, append(b.opts, WithError(err))...)
+}
+
+type LoginUserExpectation struct {
+	handler *TestHandler
+	req     LoginUserRequestObject
+	opts    []ExpectOption
+}
+
+// RespondJSON200 sets the expectation to return a 200 response with JSON content.
+func (b *LoginUserExpectation) RespondJSON200(resp LoginUser200JSONResponse) {
+	b.handler.loginUserExpectResponses.expect(b.handler.tb, b.req, nil, resp, b.opts...)
+}
+
+// Respond400 sets the expectation to return a 400 response.
+func (b *LoginUserExpectation) Respond400() {
+	var resp LoginUser400Response
+	b.handler.loginUserExpectResponses.expect(b.handler.tb, b.req, nil, resp, b.opts...)
+}
+
+// RespondWithError sets the expectation to return an error instead of a response.
+func (b *LoginUserExpectation) RespondWithError(err error) {
+	var zeroResp LoginUserResponseObject
+	b.handler.loginUserExpectResponses.expect(b.handler.tb, b.req, nil, zeroResp, append(b.opts, WithError(err))...)
+}
+
+type LogoutUserExpectation struct {
+	handler *TestHandler
+	req     LogoutUserRequestObject
+	opts    []ExpectOption
+}
+
+// Respond200 sets the expectation to return a 200 response.
+func (b *LogoutUserExpectation) Respond200() {
+	var resp LogoutUser200Response
+	b.handler.logoutUserExpectResponses.expect(b.handler.tb, b.req, nil, resp, b.opts...)
+}
+
+// RespondWithError sets the expectation to return an error instead of a response.
+func (b *LogoutUserExpectation) RespondWithError(err error) {
+	var zeroResp LogoutUserResponseObject
+	b.handler.logoutUserExpectResponses.expect(b.handler.tb, b.req, nil, zeroResp, append(b.opts, WithError(err))...)
+}
+
+type DeleteUserExpectation struct {
+	handler *TestHandler
+	req     DeleteUserRequestObject
+	opts    []ExpectOption
+}
+
+// Respond200 sets the expectation to return a 200 response.
+func (b *DeleteUserExpectation) Respond200() {
+	var resp DeleteUser200Response
+	b.handler.deleteUserExpectResponses.expect(b.handler.tb, b.req, nil, resp, b.opts...)
+}
+
+// Respond400 sets the expectation to return a 400 response.
+func (b *DeleteUserExpectation) Respond400() {
+	var resp DeleteUser400Response
+	b.handler.deleteUserExpectResponses.expect(b.handler.tb, b.req, nil, resp, b.opts...)
+}
+
+// Respond404 sets the expectation to return a 404 response.
+func (b *DeleteUserExpectation) Respond404() {
+	var resp DeleteUser404Response
+	b.handler.deleteUserExpectResponses.expect(b.handler.tb, b.req, nil, resp, b.opts...)
+}
+
+// RespondWithError sets the expectation to return an error instead of a response.
+func (b *DeleteUserExpectation) RespondWithError(err error) {
+	var zeroResp DeleteUserResponseObject
+	b.handler.deleteUserExpectResponses.expect(b.handler.tb, b.req, nil, zeroResp, append(b.opts, WithError(err))...)
+}
+
+type GetUserByNameExpectation struct {
+	handler *TestHandler
+	req     GetUserByNameRequestObject
+	opts    []ExpectOption
+}
+
+// RespondJSON200 sets the expectation to return a 200 response with JSON content.
+func (b *GetUserByNameExpectation) RespondJSON200(resp GetUserByName200JSONResponse) {
+	b.handler.getUserByNameExpectResponses.expect(b.handler.tb, b.req, nil, resp, b.opts...)
+}
+
+// Respond400 sets the expectation to return a 400 response.
+func (b *GetUserByNameExpectation) Respond400() {
+	var resp GetUserByName400Response
+	b.handler.getUserByNameExpectResponses.expect(b.handler.tb, b.req, nil, resp, b.opts...)
+}
+
+// Respond404 sets the expectation to return a 404 response.
+func (b *GetUserByNameExpectation) Respond404() {
+	var resp GetUserByName404Response
+	b.handler.getUserByNameExpectResponses.expect(b.handler.tb, b.req, nil, resp, b.opts...)
+}
+
+// RespondWithError sets the expectation to return an error instead of a response.
+func (b *GetUserByNameExpectation) RespondWithError(err error) {
+	var zeroResp GetUserByNameResponseObject
+	b.handler.getUserByNameExpectResponses.expect(b.handler.tb, b.req, nil, zeroResp, append(b.opts, WithError(err))...)
+}
+
+type UpdateUserExpectation struct {
+	handler *TestHandler
+	req     UpdateUserRequestObject
+	rawBody io.Reader
+	opts    []ExpectOption
+}
+
+// Respond200 sets the expectation to return a 200 response.
+func (b *UpdateUserExpectation) Respond200() {
+	var resp UpdateUser200Response
+	b.handler.updateUserExpectResponses.expect(b.handler.tb, b.req, b.rawBody, resp, b.opts...)
+}
+
+// Respond400 sets the expectation to return a 400 response.
+func (b *UpdateUserExpectation) Respond400() {
+	var resp UpdateUser400Response
+	b.handler.updateUserExpectResponses.expect(b.handler.tb, b.req, b.rawBody, resp, b.opts...)
+}
+
+// Respond404 sets the expectation to return a 404 response.
+func (b *UpdateUserExpectation) Respond404() {
+	var resp UpdateUser404Response
+	b.handler.updateUserExpectResponses.expect(b.handler.tb, b.req, b.rawBody, resp, b.opts...)
+}
+
+// RespondWithError sets the expectation to return an error instead of a response.
+func (b *UpdateUserExpectation) RespondWithError(err error) {
+	var zeroResp UpdateUserResponseObject
+	b.handler.updateUserExpectResponses.expect(b.handler.tb, b.req, b.rawBody, zeroResp, append(b.opts, WithError(err))...)
+}
+
 func (s *TestHandler) ExpectAddPet(
-	req AddPetRequestObject,
-	resp AddPetResponseObject,
+	body AddPetJSONRequestBody,
 	opts ...ExpectOption,
-) {
-	s.addPetExpectations.Expect(s.tb, req, resp, opts...)
+) *AddPetExpectation {
+	req := AddPetRequestObject{
+		JSONBody: &body,
+	}
+	return &AddPetExpectation{
+		handler: s,
+		req:     req,
+		opts:    opts,
+	}
+}
+
+func (s *TestHandler) ExpectAddPetWithFormdataBody(
+	body AddPetFormdataRequestBody,
+	opts ...ExpectOption,
+) *AddPetExpectation {
+	req := AddPetRequestObject{
+		FormdataBody: &body,
+	}
+	return &AddPetExpectation{
+		handler: s,
+		req:     req,
+		opts:    opts,
+	}
+}
+
+func (s *TestHandler) ExpectAddPetWithBody(
+	contentType string,
+	body []byte,
+	opts ...ExpectOption,
+) *AddPetExpectation {
+	req := AddPetRequestObject{
+		Body: bytes.NewReader(body),
+	}
+	return &AddPetExpectation{
+		handler: s,
+		req:     req,
+		rawBody: bytes.NewReader(body),
+		opts:    opts,
+	}
 }
 
 func (s *TestHandler) ExpectUpdatePet(
-	req UpdatePetRequestObject,
-	resp UpdatePetResponseObject,
+	body UpdatePetJSONRequestBody,
 	opts ...ExpectOption,
-) {
-	s.updatePetExpectations.Expect(s.tb, req, resp, opts...)
+) *UpdatePetExpectation {
+	req := UpdatePetRequestObject{
+		JSONBody: &body,
+	}
+	return &UpdatePetExpectation{
+		handler: s,
+		req:     req,
+		opts:    opts,
+	}
+}
+
+func (s *TestHandler) ExpectUpdatePetWithFormdataBody(
+	body UpdatePetFormdataRequestBody,
+	opts ...ExpectOption,
+) *UpdatePetExpectation {
+	req := UpdatePetRequestObject{
+		FormdataBody: &body,
+	}
+	return &UpdatePetExpectation{
+		handler: s,
+		req:     req,
+		opts:    opts,
+	}
+}
+
+func (s *TestHandler) ExpectUpdatePetWithBody(
+	contentType string,
+	body []byte,
+	opts ...ExpectOption,
+) *UpdatePetExpectation {
+	req := UpdatePetRequestObject{
+		Body: bytes.NewReader(body),
+	}
+	return &UpdatePetExpectation{
+		handler: s,
+		req:     req,
+		rawBody: bytes.NewReader(body),
+		opts:    opts,
+	}
 }
 
 func (s *TestHandler) ExpectFindPetsByStatus(
-	req FindPetsByStatusRequestObject,
-	resp FindPetsByStatusResponseObject,
+	queryParams *FindPetsByStatusParams,
 	opts ...ExpectOption,
-) {
-	s.findPetsByStatusExpectations.Expect(s.tb, req, resp, opts...)
+) *FindPetsByStatusExpectation {
+	req := FindPetsByStatusRequestObject{}
+	if queryParams != nil {
+		req.Params = *queryParams
+	}
+	return &FindPetsByStatusExpectation{
+		handler: s,
+		req:     req,
+		opts:    opts,
+	}
 }
 
 func (s *TestHandler) ExpectFindPetsByTags(
-	req FindPetsByTagsRequestObject,
-	resp FindPetsByTagsResponseObject,
+	queryParams *FindPetsByTagsParams,
 	opts ...ExpectOption,
-) {
-	s.findPetsByTagsExpectations.Expect(s.tb, req, resp, opts...)
+) *FindPetsByTagsExpectation {
+	req := FindPetsByTagsRequestObject{}
+	if queryParams != nil {
+		req.Params = *queryParams
+	}
+	return &FindPetsByTagsExpectation{
+		handler: s,
+		req:     req,
+		opts:    opts,
+	}
 }
 
 func (s *TestHandler) ExpectDeletePet(
-	req DeletePetRequestObject,
-	resp DeletePetResponseObject,
+	petId int64,
+	queryParams *DeletePetParams,
 	opts ...ExpectOption,
-) {
-	s.deletePetExpectations.Expect(s.tb, req, resp, opts...)
+) *DeletePetExpectation {
+	req := DeletePetRequestObject{
+		PetId: petId,
+	}
+	if queryParams != nil {
+		req.Params = *queryParams
+	}
+	return &DeletePetExpectation{
+		handler: s,
+		req:     req,
+		opts:    opts,
+	}
 }
 
 func (s *TestHandler) ExpectGetPetById(
-	req GetPetByIdRequestObject,
-	resp GetPetByIdResponseObject,
+	petId int64,
 	opts ...ExpectOption,
-) {
-	s.getPetByIdExpectations.Expect(s.tb, req, resp, opts...)
+) *GetPetByIdExpectation {
+	req := GetPetByIdRequestObject{
+		PetId: petId,
+	}
+	return &GetPetByIdExpectation{
+		handler: s,
+		req:     req,
+		opts:    opts,
+	}
 }
 
 func (s *TestHandler) ExpectUpdatePetWithForm(
-	req UpdatePetWithFormRequestObject,
-	resp UpdatePetWithFormResponseObject,
+	petId int64,
+	queryParams *UpdatePetWithFormParams,
 	opts ...ExpectOption,
-) {
-	s.updatePetWithFormExpectations.Expect(s.tb, req, resp, opts...)
+) *UpdatePetWithFormExpectation {
+	req := UpdatePetWithFormRequestObject{
+		PetId: petId,
+	}
+	if queryParams != nil {
+		req.Params = *queryParams
+	}
+	return &UpdatePetWithFormExpectation{
+		handler: s,
+		req:     req,
+		opts:    opts,
+	}
 }
 
 func (s *TestHandler) ExpectGetPetMetadata(
-	req GetPetMetadataRequestObject,
-	resp GetPetMetadataResponseObject,
+	petId int64,
+	queryParams *GetPetMetadataParams,
 	opts ...ExpectOption,
-) {
-	s.getPetMetadataExpectations.Expect(s.tb, req, resp, opts...)
+) *GetPetMetadataExpectation {
+	req := GetPetMetadataRequestObject{
+		PetId: petId,
+	}
+	if queryParams != nil {
+		req.Params = *queryParams
+	}
+	return &GetPetMetadataExpectation{
+		handler: s,
+		req:     req,
+		opts:    opts,
+	}
 }
 
 func (s *TestHandler) ExpectGetPetPhotoById(
-	req GetPetPhotoByIdRequestObject,
-	resp GetPetPhotoByIdResponseObject,
+	petId int64,
+	photoId int64,
 	opts ...ExpectOption,
-) {
-	s.getPetPhotoByIdExpectations.Expect(s.tb, req, resp, opts...)
+) *GetPetPhotoByIdExpectation {
+	req := GetPetPhotoByIdRequestObject{
+		PetId:   petId,
+		PhotoId: photoId,
+	}
+	return &GetPetPhotoByIdExpectation{
+		handler: s,
+		req:     req,
+		opts:    opts,
+	}
 }
 
 func (s *TestHandler) ExpectGetPetRegistration(
-	req GetPetRegistrationRequestObject,
-	resp GetPetRegistrationResponseObject,
+	petId int64,
 	opts ...ExpectOption,
-) {
-	s.getPetRegistrationExpectations.Expect(s.tb, req, resp, opts...)
+) *GetPetRegistrationExpectation {
+	req := GetPetRegistrationRequestObject{
+		PetId: petId,
+	}
+	return &GetPetRegistrationExpectation{
+		handler: s,
+		req:     req,
+		opts:    opts,
+	}
 }
 
-func (s *TestHandler) ExpectUploadFile(
-	req UploadFileRequestObject,
-	resp UploadFileResponseObject,
+func (s *TestHandler) ExpectUploadFileWithBody(
+	petId int64,
+	contentType string,
+	body []byte,
 	opts ...ExpectOption,
-) {
-	s.uploadFileExpectations.Expect(s.tb, req, resp, opts...)
+) *UploadFileExpectation {
+	req := UploadFileRequestObject{
+		PetId: petId,
+		Body:  bytes.NewReader(body),
+	}
+	return &UploadFileExpectation{
+		handler: s,
+		req:     req,
+		rawBody: bytes.NewReader(body),
+		opts:    opts,
+	}
 }
 
 func (s *TestHandler) ExpectGetStoreInventory(
-	req GetStoreInventoryRequestObject,
-	resp GetStoreInventoryResponseObject,
 	opts ...ExpectOption,
-) {
-	s.getStoreInventoryExpectations.Expect(s.tb, req, resp, opts...)
+) *GetStoreInventoryExpectation {
+	req := GetStoreInventoryRequestObject{}
+	return &GetStoreInventoryExpectation{
+		handler: s,
+		req:     req,
+		opts:    opts,
+	}
 }
 
 func (s *TestHandler) ExpectPostStoreOrder(
-	req PostStoreOrderRequestObject,
-	resp PostStoreOrderResponseObject,
+	body PostStoreOrderJSONRequestBody,
 	opts ...ExpectOption,
-) {
-	s.postStoreOrderExpectations.Expect(s.tb, req, resp, opts...)
+) *PostStoreOrderExpectation {
+	req := PostStoreOrderRequestObject{
+		JSONBody: &body,
+	}
+	return &PostStoreOrderExpectation{
+		handler: s,
+		req:     req,
+		opts:    opts,
+	}
+}
+
+func (s *TestHandler) ExpectPostStoreOrderWithFormdataBody(
+	body PostStoreOrderFormdataRequestBody,
+	opts ...ExpectOption,
+) *PostStoreOrderExpectation {
+	req := PostStoreOrderRequestObject{
+		FormdataBody: &body,
+	}
+	return &PostStoreOrderExpectation{
+		handler: s,
+		req:     req,
+		opts:    opts,
+	}
+}
+
+func (s *TestHandler) ExpectPostStoreOrderWithBody(
+	contentType string,
+	body []byte,
+	opts ...ExpectOption,
+) *PostStoreOrderExpectation {
+	req := PostStoreOrderRequestObject{
+		Body: bytes.NewReader(body),
+	}
+	return &PostStoreOrderExpectation{
+		handler: s,
+		req:     req,
+		rawBody: bytes.NewReader(body),
+		opts:    opts,
+	}
 }
 
 func (s *TestHandler) ExpectDeleteOrder(
-	req DeleteOrderRequestObject,
-	resp DeleteOrderResponseObject,
+	orderId int64,
 	opts ...ExpectOption,
-) {
-	s.deleteOrderExpectations.Expect(s.tb, req, resp, opts...)
+) *DeleteOrderExpectation {
+	req := DeleteOrderRequestObject{
+		OrderId: orderId,
+	}
+	return &DeleteOrderExpectation{
+		handler: s,
+		req:     req,
+		opts:    opts,
+	}
 }
 
 func (s *TestHandler) ExpectGetOrderById(
-	req GetOrderByIdRequestObject,
-	resp GetOrderByIdResponseObject,
+	orderId int64,
 	opts ...ExpectOption,
-) {
-	s.getOrderByIdExpectations.Expect(s.tb, req, resp, opts...)
+) *GetOrderByIdExpectation {
+	req := GetOrderByIdRequestObject{
+		OrderId: orderId,
+	}
+	return &GetOrderByIdExpectation{
+		handler: s,
+		req:     req,
+		opts:    opts,
+	}
 }
 
 func (s *TestHandler) ExpectCreateUser(
-	req CreateUserRequestObject,
-	resp CreateUserResponseObject,
+	body CreateUserJSONRequestBody,
 	opts ...ExpectOption,
-) {
-	s.createUserExpectations.Expect(s.tb, req, resp, opts...)
+) *CreateUserExpectation {
+	req := CreateUserRequestObject{
+		JSONBody: &body,
+	}
+	return &CreateUserExpectation{
+		handler: s,
+		req:     req,
+		opts:    opts,
+	}
+}
+
+func (s *TestHandler) ExpectCreateUserWithFormdataBody(
+	body CreateUserFormdataRequestBody,
+	opts ...ExpectOption,
+) *CreateUserExpectation {
+	req := CreateUserRequestObject{
+		FormdataBody: &body,
+	}
+	return &CreateUserExpectation{
+		handler: s,
+		req:     req,
+		opts:    opts,
+	}
+}
+
+func (s *TestHandler) ExpectCreateUserWithBody(
+	contentType string,
+	body []byte,
+	opts ...ExpectOption,
+) *CreateUserExpectation {
+	req := CreateUserRequestObject{
+		Body: bytes.NewReader(body),
+	}
+	return &CreateUserExpectation{
+		handler: s,
+		req:     req,
+		rawBody: bytes.NewReader(body),
+		opts:    opts,
+	}
 }
 
 func (s *TestHandler) ExpectCreateUsersWithListInput(
-	req CreateUsersWithListInputRequestObject,
-	resp CreateUsersWithListInputResponseObject,
+	body CreateUsersWithListInputJSONRequestBody,
 	opts ...ExpectOption,
-) {
-	s.createUsersWithListInputExpectations.Expect(s.tb, req, resp, opts...)
+) *CreateUsersWithListInputExpectation {
+	req := CreateUsersWithListInputRequestObject{
+		Body: &body,
+	}
+	return &CreateUsersWithListInputExpectation{
+		handler: s,
+		req:     req,
+		opts:    opts,
+	}
 }
 
 func (s *TestHandler) ExpectLoginUser(
-	req LoginUserRequestObject,
-	resp LoginUserResponseObject,
+	queryParams *LoginUserParams,
 	opts ...ExpectOption,
-) {
-	s.loginUserExpectations.Expect(s.tb, req, resp, opts...)
+) *LoginUserExpectation {
+	req := LoginUserRequestObject{}
+	if queryParams != nil {
+		req.Params = *queryParams
+	}
+	return &LoginUserExpectation{
+		handler: s,
+		req:     req,
+		opts:    opts,
+	}
 }
 
 func (s *TestHandler) ExpectLogoutUser(
-	req LogoutUserRequestObject,
-	resp LogoutUserResponseObject,
 	opts ...ExpectOption,
-) {
-	s.logoutUserExpectations.Expect(s.tb, req, resp, opts...)
+) *LogoutUserExpectation {
+	req := LogoutUserRequestObject{}
+	return &LogoutUserExpectation{
+		handler: s,
+		req:     req,
+		opts:    opts,
+	}
 }
 
 func (s *TestHandler) ExpectDeleteUser(
-	req DeleteUserRequestObject,
-	resp DeleteUserResponseObject,
+	username string,
 	opts ...ExpectOption,
-) {
-	s.deleteUserExpectations.Expect(s.tb, req, resp, opts...)
+) *DeleteUserExpectation {
+	req := DeleteUserRequestObject{
+		Username: username,
+	}
+	return &DeleteUserExpectation{
+		handler: s,
+		req:     req,
+		opts:    opts,
+	}
 }
 
 func (s *TestHandler) ExpectGetUserByName(
-	req GetUserByNameRequestObject,
-	resp GetUserByNameResponseObject,
+	username string,
 	opts ...ExpectOption,
-) {
-	s.getUserByNameExpectations.Expect(s.tb, req, resp, opts...)
+) *GetUserByNameExpectation {
+	req := GetUserByNameRequestObject{
+		Username: username,
+	}
+	return &GetUserByNameExpectation{
+		handler: s,
+		req:     req,
+		opts:    opts,
+	}
 }
 
 func (s *TestHandler) ExpectUpdateUser(
-	req UpdateUserRequestObject,
-	resp UpdateUserResponseObject,
+	username string,
+	body UpdateUserJSONRequestBody,
 	opts ...ExpectOption,
-) {
-	s.updateUserExpectations.Expect(s.tb, req, resp, opts...)
+) *UpdateUserExpectation {
+	req := UpdateUserRequestObject{
+		Username: username,
+		JSONBody: &body,
+	}
+	return &UpdateUserExpectation{
+		handler: s,
+		req:     req,
+		opts:    opts,
+	}
+}
+
+func (s *TestHandler) ExpectUpdateUserWithFormdataBody(
+	username string,
+	body UpdateUserFormdataRequestBody,
+	opts ...ExpectOption,
+) *UpdateUserExpectation {
+	req := UpdateUserRequestObject{
+		Username:     username,
+		FormdataBody: &body,
+	}
+	return &UpdateUserExpectation{
+		handler: s,
+		req:     req,
+		opts:    opts,
+	}
+}
+
+func (s *TestHandler) ExpectUpdateUserWithBody(
+	username string,
+	contentType string,
+	body []byte,
+	opts ...ExpectOption,
+) *UpdateUserExpectation {
+	req := UpdateUserRequestObject{
+		Username: username,
+		Body:     bytes.NewReader(body),
+	}
+	return &UpdateUserExpectation{
+		handler: s,
+		req:     req,
+		rawBody: bytes.NewReader(body),
+		opts:    opts,
+	}
 }

@@ -48,6 +48,20 @@ func (s *petStore) getPetsByIDs(ctx context.Context, ids ...int64) ([]*pet, erro
 	return pets, nil
 }
 
+func (s *petStore) updatePetStatus(ctx context.Context, id int32, status petStatus) error {
+	resp, err := s.client.UpdatePetWithResponse(ctx, oapi.UpdatePetJSONRequestBody{
+		Id:     ptr(id),
+		Status: petStatusToOapi(status),
+	})
+	if err != nil {
+		return err
+	}
+	if resp.StatusCode() != 200 {
+		return fmt.Errorf("unexpected status code: %d", resp.StatusCode())
+	}
+	return nil
+}
+
 type pet struct {
 	Name     string
 	Category string
@@ -90,6 +104,19 @@ func petStatusFromOapi(op *oapi.PetStatus) petStatus {
 		return petStatusSold
 	default:
 		return petStatusInvalid
+	}
+}
+
+func petStatusToOapi(ps petStatus) *oapi.PetStatus {
+	switch ps {
+	case petStatusAvailable:
+		return ptr(oapi.PetStatusAvailable)
+	case petStatusPending:
+		return ptr(oapi.PetStatusPending)
+	case petStatusSold:
+		return ptr(oapi.PetStatusSold)
+	default:
+		return nil
 	}
 }
 

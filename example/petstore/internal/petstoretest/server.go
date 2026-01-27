@@ -12,89 +12,89 @@ type testServer struct {
 }
 
 func (t *testServer) AddPet(_ context.Context, req AddPetRequestObject) (AddPetResponseObject, error) {
-	return t.handler.addPetExpectations.GetResponse(t.tb, req)
+	return t.handler.addPetExpectResponses.getResponse(t.tb, req, req.Body)
 }
 
 func (t *testServer) UpdatePet(_ context.Context, req UpdatePetRequestObject) (UpdatePetResponseObject, error) {
-	return t.handler.updatePetExpectations.GetResponse(t.tb, req)
+	return t.handler.updatePetExpectResponses.getResponse(t.tb, req, req.Body)
 }
 
 func (t *testServer) FindPetsByStatus(_ context.Context, req FindPetsByStatusRequestObject) (FindPetsByStatusResponseObject, error) {
-	return t.handler.findPetsByStatusExpectations.GetResponse(t.tb, req)
+	return t.handler.findPetsByStatusExpectResponses.getResponse(t.tb, req, nil)
 }
 
 func (t *testServer) FindPetsByTags(_ context.Context, req FindPetsByTagsRequestObject) (FindPetsByTagsResponseObject, error) {
-	return t.handler.findPetsByTagsExpectations.GetResponse(t.tb, req)
+	return t.handler.findPetsByTagsExpectResponses.getResponse(t.tb, req, nil)
 }
 
 func (t *testServer) DeletePet(_ context.Context, req DeletePetRequestObject) (DeletePetResponseObject, error) {
-	return t.handler.deletePetExpectations.GetResponse(t.tb, req)
+	return t.handler.deletePetExpectResponses.getResponse(t.tb, req, nil)
 }
 
 func (t *testServer) GetPetById(_ context.Context, req GetPetByIdRequestObject) (GetPetByIdResponseObject, error) {
-	return t.handler.getPetByIdExpectations.GetResponse(t.tb, req)
+	return t.handler.getPetByIdExpectResponses.getResponse(t.tb, req, nil)
 }
 
 func (t *testServer) UpdatePetWithForm(_ context.Context, req UpdatePetWithFormRequestObject) (UpdatePetWithFormResponseObject, error) {
-	return t.handler.updatePetWithFormExpectations.GetResponse(t.tb, req)
+	return t.handler.updatePetWithFormExpectResponses.getResponse(t.tb, req, nil)
 }
 
 func (t *testServer) GetPetMetadata(_ context.Context, req GetPetMetadataRequestObject) (GetPetMetadataResponseObject, error) {
-	return t.handler.getPetMetadataExpectations.GetResponse(t.tb, req)
+	return t.handler.getPetMetadataExpectResponses.getResponse(t.tb, req, nil)
 }
 
 func (t *testServer) GetPetPhotoById(_ context.Context, req GetPetPhotoByIdRequestObject) (GetPetPhotoByIdResponseObject, error) {
-	return t.handler.getPetPhotoByIdExpectations.GetResponse(t.tb, req)
+	return t.handler.getPetPhotoByIdExpectResponses.getResponse(t.tb, req, nil)
 }
 
 func (t *testServer) GetPetRegistration(_ context.Context, req GetPetRegistrationRequestObject) (GetPetRegistrationResponseObject, error) {
-	return t.handler.getPetRegistrationExpectations.GetResponse(t.tb, req)
+	return t.handler.getPetRegistrationExpectResponses.getResponse(t.tb, req, nil)
 }
 
 func (t *testServer) UploadFile(_ context.Context, req UploadFileRequestObject) (UploadFileResponseObject, error) {
-	return t.handler.uploadFileExpectations.GetResponse(t.tb, req)
+	return t.handler.uploadFileExpectResponses.getResponse(t.tb, req, req.Body)
 }
 
 func (t *testServer) GetStoreInventory(_ context.Context, req GetStoreInventoryRequestObject) (GetStoreInventoryResponseObject, error) {
-	return t.handler.getStoreInventoryExpectations.GetResponse(t.tb, req)
+	return t.handler.getStoreInventoryExpectResponses.getResponse(t.tb, req, nil)
 }
 
 func (t *testServer) PostStoreOrder(_ context.Context, req PostStoreOrderRequestObject) (PostStoreOrderResponseObject, error) {
-	return t.handler.postStoreOrderExpectations.GetResponse(t.tb, req)
+	return t.handler.postStoreOrderExpectResponses.getResponse(t.tb, req, req.Body)
 }
 
 func (t *testServer) DeleteOrder(_ context.Context, req DeleteOrderRequestObject) (DeleteOrderResponseObject, error) {
-	return t.handler.deleteOrderExpectations.GetResponse(t.tb, req)
+	return t.handler.deleteOrderExpectResponses.getResponse(t.tb, req, nil)
 }
 
 func (t *testServer) GetOrderById(_ context.Context, req GetOrderByIdRequestObject) (GetOrderByIdResponseObject, error) {
-	return t.handler.getOrderByIdExpectations.GetResponse(t.tb, req)
+	return t.handler.getOrderByIdExpectResponses.getResponse(t.tb, req, nil)
 }
 
 func (t *testServer) CreateUser(_ context.Context, req CreateUserRequestObject) (CreateUserResponseObject, error) {
-	return t.handler.createUserExpectations.GetResponse(t.tb, req)
+	return t.handler.createUserExpectResponses.getResponse(t.tb, req, req.Body)
 }
 
 func (t *testServer) CreateUsersWithListInput(_ context.Context, req CreateUsersWithListInputRequestObject) (CreateUsersWithListInputResponseObject, error) {
-	return t.handler.createUsersWithListInputExpectations.GetResponse(t.tb, req)
+	return t.handler.createUsersWithListInputExpectResponses.getResponse(t.tb, req, nil)
 }
 
 func (t *testServer) LoginUser(_ context.Context, req LoginUserRequestObject) (LoginUserResponseObject, error) {
-	return t.handler.loginUserExpectations.GetResponse(t.tb, req)
+	return t.handler.loginUserExpectResponses.getResponse(t.tb, req, nil)
 }
 
 func (t *testServer) LogoutUser(_ context.Context, req LogoutUserRequestObject) (LogoutUserResponseObject, error) {
-	return t.handler.logoutUserExpectations.GetResponse(t.tb, req)
+	return t.handler.logoutUserExpectResponses.getResponse(t.tb, req, nil)
 }
 
 func (t *testServer) DeleteUser(_ context.Context, req DeleteUserRequestObject) (DeleteUserResponseObject, error) {
-	return t.handler.deleteUserExpectations.GetResponse(t.tb, req)
+	return t.handler.deleteUserExpectResponses.getResponse(t.tb, req, nil)
 }
 
 func (t *testServer) GetUserByName(_ context.Context, req GetUserByNameRequestObject) (GetUserByNameResponseObject, error) {
-	return t.handler.getUserByNameExpectations.GetResponse(t.tb, req)
+	return t.handler.getUserByNameExpectResponses.getResponse(t.tb, req, nil)
 }
 
 func (t *testServer) UpdateUser(_ context.Context, req UpdateUserRequestObject) (UpdateUserResponseObject, error) {
-	return t.handler.updateUserExpectations.GetResponse(t.tb, req)
+	return t.handler.updateUserExpectResponses.getResponse(t.tb, req, req.Body)
 }
