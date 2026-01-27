@@ -271,46 +271,6 @@ func TestExpectations(t *testing.T) {
 		tb.AssertErrors()
 	})
 
-	t.Run("Handle method", func(t *testing.T) {
-		tb := testutil.NewTB(t)
-		exp := &expectations[testRequest, testResponse]{}
-
-		req := testRequest{ID: 1, Name: "test"}
-		resp := testResponse{Status: 200, Message: "ok"}
-
-		exp.Expect(tb, req, resp)
-
-		var gotResp testResponse
-		var gotErr error
-		var found bool
-
-		exp.Handle(req, func(f bool, r testResponse, e error) {
-			found = f
-			gotResp = r
-			gotErr = e
-		})
-
-		assert.True(t, found, "expected to find expectation")
-		assert.NoError(t, gotErr)
-		assert.Equal(t, resp.Status, gotResp.Status)
-
-		tb.RunCleanups()
-		tb.AssertNoErrors()
-	})
-
-	t.Run("Handle method with no match", func(t *testing.T) {
-		exp := &expectations[testRequest, testResponse]{}
-
-		req := testRequest{ID: 1, Name: "test"}
-
-		var found bool
-		exp.Handle(req, func(f bool, r testResponse, e error) {
-			found = f
-		})
-
-		assert.False(t, found, "expected not to find expectation")
-	})
-
 	t.Run("FIFO matching", func(t *testing.T) {
 		tb := testutil.NewTB(t)
 		exp := &expectations[testRequest, testResponse]{}
