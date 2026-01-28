@@ -405,24 +405,6 @@ func TestFailureScenarios(t *testing.T) {
 		// Verify that an error was reported
 		tb.AssertErrors()
 	})
-
-	t.Run("WithError option", func(t *testing.T) {
-		handler := petstoretest.NewTestHandler(t)
-		server := httptest.NewServer(handler)
-		defer server.Close()
-
-		client, err := oapi.NewClientWithResponses(server.URL)
-		require.NoError(t, err)
-
-		// Set an expectation that returns an error
-		// When the handler returns an error, the StrictHandler converts it to HTTP 500
-		handler.ExpectGetPetById(1).RespondWithError(assert.AnError)
-
-		// The HTTP request succeeds but gets a 500 Internal Server Error status
-		resp, err := client.GetPetByIdWithResponse(context.Background(), 1)
-		require.NoError(t, err)
-		require.Equal(t, 500, resp.StatusCode())
-	})
 }
 
 func TestHandleMethod(t *testing.T) {

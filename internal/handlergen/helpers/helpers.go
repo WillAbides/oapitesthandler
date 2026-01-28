@@ -11,7 +11,6 @@ import (
 )
 
 type expectOpts struct {
-	error   error
 	times   int
 	atLeast bool
 }
@@ -42,14 +41,6 @@ func MinTimes(n int) ExpectOption {
 	}
 }
 
-// WithError sets an error to be returned from the strict handler instead of the response.
-// When using WithError, set the response to the zero value because it will be ignored anyway.
-func WithError(err error) ExpectOption {
-	return func(o *expectOpts) {
-		o.error = err
-	}
-}
-
 func keyHash(req any, rawRequestBody []byte) string {
 	// json marshal/unmarshal errors are programming errors, so we can panic on them
 	// specifically it means our assumption about the request type is wrong
@@ -77,7 +68,6 @@ func keyHash(req any, rawRequestBody []byte) string {
 }
 
 type expectResponse[REQ, RESP any] struct {
-	error    error
 	request  REQ
 	response RESP
 
@@ -117,7 +107,6 @@ func (e *expectResponses[REQ, RESP]) expect(t TB, req REQ, rawRequestBody io.Rea
 	ex := &expectResponse[REQ, RESP]{
 		request:  req,
 		response: resp,
-		error:    options.error,
 		times:    options.times,
 		atLeast:  options.atLeast,
 		keyHash:  keyHash(req, bodyBytes),
@@ -163,5 +152,5 @@ func (e *expectResponses[REQ, RESP]) getResponse(t TB, req REQ, rawRequestBody i
 	if ex.times > 0 {
 		ex.times--
 	}
-	return ex.response, ex.error
+	return ex.response, nil
 }

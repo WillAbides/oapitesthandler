@@ -81,12 +81,6 @@ func (b *AddPetExpectation) Respond422() {
 	b.handler.addPetExpectResponses.expect(b.handler.tb, b.req, b.rawBody, resp, b.opts...)
 }
 
-// RespondWithError sets the expectation to return an error instead of a response.
-func (b *AddPetExpectation) RespondWithError(err error) {
-	var zeroResp AddPetResponseObject
-	b.handler.addPetExpectResponses.expect(b.handler.tb, b.req, b.rawBody, zeroResp, append(b.opts, WithError(err))...)
-}
-
 // Handle sets the expectation to invoke a custom handler function with full control over the HTTP response.
 func (b *AddPetExpectation) Handle(fn func(AddPetRequestObject, http.ResponseWriter) error) {
 	resp := addPetRawResponder{req: b.req, fn: fn}
@@ -129,12 +123,6 @@ func (b *UpdatePetExpectation) RespondJSON422(resp UpdatePet422JSONResponse) {
 	b.handler.updatePetExpectResponses.expect(b.handler.tb, b.req, b.rawBody, resp, b.opts...)
 }
 
-// RespondWithError sets the expectation to return an error instead of a response.
-func (b *UpdatePetExpectation) RespondWithError(err error) {
-	var zeroResp UpdatePetResponseObject
-	b.handler.updatePetExpectResponses.expect(b.handler.tb, b.req, b.rawBody, zeroResp, append(b.opts, WithError(err))...)
-}
-
 // Handle sets the expectation to invoke a custom handler function with full control over the HTTP response.
 func (b *UpdatePetExpectation) Handle(fn func(UpdatePetRequestObject, http.ResponseWriter) error) {
 	resp := updatePetRawResponder{req: b.req, fn: fn}
@@ -167,12 +155,6 @@ func (b *FindPetsByStatusExpectation) Respond400() {
 	b.handler.findPetsByStatusExpectResponses.expect(b.handler.tb, b.req, nil, resp, b.opts...)
 }
 
-// RespondWithError sets the expectation to return an error instead of a response.
-func (b *FindPetsByStatusExpectation) RespondWithError(err error) {
-	var zeroResp FindPetsByStatusResponseObject
-	b.handler.findPetsByStatusExpectResponses.expect(b.handler.tb, b.req, nil, zeroResp, append(b.opts, WithError(err))...)
-}
-
 // Handle sets the expectation to invoke a custom handler function with full control over the HTTP response.
 func (b *FindPetsByStatusExpectation) Handle(fn func(FindPetsByStatusRequestObject, http.ResponseWriter) error) {
 	resp := findPetsByStatusRawResponder{req: b.req, fn: fn}
@@ -203,12 +185,6 @@ func (b *FindPetsByTagsExpectation) RespondJSON200(resp FindPetsByTags200JSONRes
 func (b *FindPetsByTagsExpectation) Respond400() {
 	var resp FindPetsByTags400Response
 	b.handler.findPetsByTagsExpectResponses.expect(b.handler.tb, b.req, nil, resp, b.opts...)
-}
-
-// RespondWithError sets the expectation to return an error instead of a response.
-func (b *FindPetsByTagsExpectation) RespondWithError(err error) {
-	var zeroResp FindPetsByTagsResponseObject
-	b.handler.findPetsByTagsExpectResponses.expect(b.handler.tb, b.req, nil, zeroResp, append(b.opts, WithError(err))...)
 }
 
 // Handle sets the expectation to invoke a custom handler function with full control over the HTTP response.
@@ -253,12 +229,6 @@ func (b *DeletePetExpectation) RespondJSON404(resp DeletePet404JSONResponse) {
 	b.handler.deletePetExpectResponses.expect(b.handler.tb, b.req, nil, resp, b.opts...)
 }
 
-// RespondWithError sets the expectation to return an error instead of a response.
-func (b *DeletePetExpectation) RespondWithError(err error) {
-	var zeroResp DeletePetResponseObject
-	b.handler.deletePetExpectResponses.expect(b.handler.tb, b.req, nil, zeroResp, append(b.opts, WithError(err))...)
-}
-
 // Handle sets the expectation to invoke a custom handler function with full control over the HTTP response.
 func (b *DeletePetExpectation) Handle(fn func(DeletePetRequestObject, http.ResponseWriter) error) {
 	resp := deletePetRawResponder{req: b.req, fn: fn}
@@ -300,12 +270,6 @@ func (b *GetPetByIdExpectation) RespondJSON404(resp GetPetById404JSONResponse) {
 	b.handler.getPetByIdExpectResponses.expect(b.handler.tb, b.req, nil, resp, b.opts...)
 }
 
-// RespondWithError sets the expectation to return an error instead of a response.
-func (b *GetPetByIdExpectation) RespondWithError(err error) {
-	var zeroResp GetPetByIdResponseObject
-	b.handler.getPetByIdExpectResponses.expect(b.handler.tb, b.req, nil, zeroResp, append(b.opts, WithError(err))...)
-}
-
 // Handle sets the expectation to invoke a custom handler function with full control over the HTTP response.
 func (b *GetPetByIdExpectation) Handle(fn func(GetPetByIdRequestObject, http.ResponseWriter) error) {
 	resp := getPetByIdRawResponder{req: b.req, fn: fn}
@@ -336,12 +300,6 @@ func (b *UpdatePetWithFormExpectation) RespondJSON200(resp UpdatePetWithForm200J
 func (b *UpdatePetWithFormExpectation) Respond400() {
 	var resp UpdatePetWithForm400Response
 	b.handler.updatePetWithFormExpectResponses.expect(b.handler.tb, b.req, nil, resp, b.opts...)
-}
-
-// RespondWithError sets the expectation to return an error instead of a response.
-func (b *UpdatePetWithFormExpectation) RespondWithError(err error) {
-	var zeroResp UpdatePetWithFormResponseObject
-	b.handler.updatePetWithFormExpectResponses.expect(b.handler.tb, b.req, nil, zeroResp, append(b.opts, WithError(err))...)
 }
 
 // Handle sets the expectation to invoke a custom handler function with full control over the HTTP response.
@@ -381,12 +339,6 @@ func (b *GetPetMetadataExpectation) RespondJSON404(resp GetPetMetadata404JSONRes
 	b.handler.getPetMetadataExpectResponses.expect(b.handler.tb, b.req, nil, resp, b.opts...)
 }
 
-// RespondWithError sets the expectation to return an error instead of a response.
-func (b *GetPetMetadataExpectation) RespondWithError(err error) {
-	var zeroResp GetPetMetadataResponseObject
-	b.handler.getPetMetadataExpectResponses.expect(b.handler.tb, b.req, nil, zeroResp, append(b.opts, WithError(err))...)
-}
-
 // Handle sets the expectation to invoke a custom handler function with full control over the HTTP response.
 func (b *GetPetMetadataExpectation) Handle(fn func(GetPetMetadataRequestObject, http.ResponseWriter) error) {
 	resp := getPetMetadataRawResponder{req: b.req, fn: fn}
@@ -418,12 +370,6 @@ func (b *GetPetPhotoByIdExpectation) RespondJSON404(resp GetPetPhotoById404JSONR
 	b.handler.getPetPhotoByIdExpectResponses.expect(b.handler.tb, b.req, nil, resp, b.opts...)
 }
 
-// RespondWithError sets the expectation to return an error instead of a response.
-func (b *GetPetPhotoByIdExpectation) RespondWithError(err error) {
-	var zeroResp GetPetPhotoByIdResponseObject
-	b.handler.getPetPhotoByIdExpectResponses.expect(b.handler.tb, b.req, nil, zeroResp, append(b.opts, WithError(err))...)
-}
-
 // Handle sets the expectation to invoke a custom handler function with full control over the HTTP response.
 func (b *GetPetPhotoByIdExpectation) Handle(fn func(GetPetPhotoByIdRequestObject, http.ResponseWriter) error) {
 	resp := getPetPhotoByIdRawResponder{req: b.req, fn: fn}
@@ -453,12 +399,6 @@ func (b *GetPetRegistrationExpectation) RespondJSON200(resp GetPetRegistration20
 // RespondJSON404 sets the expectation to return a 404 response with JSON content.
 func (b *GetPetRegistrationExpectation) RespondJSON404(resp GetPetRegistration404JSONResponse) {
 	b.handler.getPetRegistrationExpectResponses.expect(b.handler.tb, b.req, nil, resp, b.opts...)
-}
-
-// RespondWithError sets the expectation to return an error instead of a response.
-func (b *GetPetRegistrationExpectation) RespondWithError(err error) {
-	var zeroResp GetPetRegistrationResponseObject
-	b.handler.getPetRegistrationExpectResponses.expect(b.handler.tb, b.req, nil, zeroResp, append(b.opts, WithError(err))...)
 }
 
 // Handle sets the expectation to invoke a custom handler function with full control over the HTTP response.
@@ -500,12 +440,6 @@ func (b *UploadFileExpectation) Respond404() {
 	b.handler.uploadFileExpectResponses.expect(b.handler.tb, b.req, b.rawBody, resp, b.opts...)
 }
 
-// RespondWithError sets the expectation to return an error instead of a response.
-func (b *UploadFileExpectation) RespondWithError(err error) {
-	var zeroResp UploadFileResponseObject
-	b.handler.uploadFileExpectResponses.expect(b.handler.tb, b.req, b.rawBody, zeroResp, append(b.opts, WithError(err))...)
-}
-
 // Handle sets the expectation to invoke a custom handler function with full control over the HTTP response.
 func (b *UploadFileExpectation) Handle(fn func(UploadFileRequestObject, http.ResponseWriter) error) {
 	resp := uploadFileRawResponder{req: b.req, fn: fn}
@@ -530,12 +464,6 @@ func (r getStoreInventoryRawResponder) VisitGetStoreInventoryResponse(w http.Res
 // RespondJSON200 sets the expectation to return a 200 response with JSON content.
 func (b *GetStoreInventoryExpectation) RespondJSON200(resp GetStoreInventory200JSONResponse) {
 	b.handler.getStoreInventoryExpectResponses.expect(b.handler.tb, b.req, nil, resp, b.opts...)
-}
-
-// RespondWithError sets the expectation to return an error instead of a response.
-func (b *GetStoreInventoryExpectation) RespondWithError(err error) {
-	var zeroResp GetStoreInventoryResponseObject
-	b.handler.getStoreInventoryExpectResponses.expect(b.handler.tb, b.req, nil, zeroResp, append(b.opts, WithError(err))...)
 }
 
 // Handle sets the expectation to invoke a custom handler function with full control over the HTTP response.
@@ -577,12 +505,6 @@ func (b *PostStoreOrderExpectation) Respond422() {
 	b.handler.postStoreOrderExpectResponses.expect(b.handler.tb, b.req, b.rawBody, resp, b.opts...)
 }
 
-// RespondWithError sets the expectation to return an error instead of a response.
-func (b *PostStoreOrderExpectation) RespondWithError(err error) {
-	var zeroResp PostStoreOrderResponseObject
-	b.handler.postStoreOrderExpectResponses.expect(b.handler.tb, b.req, b.rawBody, zeroResp, append(b.opts, WithError(err))...)
-}
-
 // Handle sets the expectation to invoke a custom handler function with full control over the HTTP response.
 func (b *PostStoreOrderExpectation) Handle(fn func(PostStoreOrderRequestObject, http.ResponseWriter) error) {
 	resp := postStoreOrderRawResponder{req: b.req, fn: fn}
@@ -620,12 +542,6 @@ func (b *DeleteOrderExpectation) Respond400() {
 func (b *DeleteOrderExpectation) Respond404() {
 	var resp DeleteOrder404Response
 	b.handler.deleteOrderExpectResponses.expect(b.handler.tb, b.req, nil, resp, b.opts...)
-}
-
-// RespondWithError sets the expectation to return an error instead of a response.
-func (b *DeleteOrderExpectation) RespondWithError(err error) {
-	var zeroResp DeleteOrderResponseObject
-	b.handler.deleteOrderExpectResponses.expect(b.handler.tb, b.req, nil, zeroResp, append(b.opts, WithError(err))...)
 }
 
 // Handle sets the expectation to invoke a custom handler function with full control over the HTTP response.
@@ -666,12 +582,6 @@ func (b *GetOrderByIdExpectation) Respond404() {
 	b.handler.getOrderByIdExpectResponses.expect(b.handler.tb, b.req, nil, resp, b.opts...)
 }
 
-// RespondWithError sets the expectation to return an error instead of a response.
-func (b *GetOrderByIdExpectation) RespondWithError(err error) {
-	var zeroResp GetOrderByIdResponseObject
-	b.handler.getOrderByIdExpectResponses.expect(b.handler.tb, b.req, nil, zeroResp, append(b.opts, WithError(err))...)
-}
-
 // Handle sets the expectation to invoke a custom handler function with full control over the HTTP response.
 func (b *GetOrderByIdExpectation) Handle(fn func(GetOrderByIdRequestObject, http.ResponseWriter) error) {
 	resp := getOrderByIdRawResponder{req: b.req, fn: fn}
@@ -699,12 +609,6 @@ func (b *CreateUserExpectation) RespondJSON200(resp CreateUser200JSONResponse) {
 	b.handler.createUserExpectResponses.expect(b.handler.tb, b.req, b.rawBody, resp, b.opts...)
 }
 
-// RespondWithError sets the expectation to return an error instead of a response.
-func (b *CreateUserExpectation) RespondWithError(err error) {
-	var zeroResp CreateUserResponseObject
-	b.handler.createUserExpectResponses.expect(b.handler.tb, b.req, b.rawBody, zeroResp, append(b.opts, WithError(err))...)
-}
-
 // Handle sets the expectation to invoke a custom handler function with full control over the HTTP response.
 func (b *CreateUserExpectation) Handle(fn func(CreateUserRequestObject, http.ResponseWriter) error) {
 	resp := createUserRawResponder{req: b.req, fn: fn}
@@ -729,12 +633,6 @@ func (r createUsersWithListInputRawResponder) VisitCreateUsersWithListInputRespo
 // RespondJSON200 sets the expectation to return a 200 response with JSON content.
 func (b *CreateUsersWithListInputExpectation) RespondJSON200(resp CreateUsersWithListInput200JSONResponse) {
 	b.handler.createUsersWithListInputExpectResponses.expect(b.handler.tb, b.req, nil, resp, b.opts...)
-}
-
-// RespondWithError sets the expectation to return an error instead of a response.
-func (b *CreateUsersWithListInputExpectation) RespondWithError(err error) {
-	var zeroResp CreateUsersWithListInputResponseObject
-	b.handler.createUsersWithListInputExpectResponses.expect(b.handler.tb, b.req, nil, zeroResp, append(b.opts, WithError(err))...)
 }
 
 // Handle sets the expectation to invoke a custom handler function with full control over the HTTP response.
@@ -769,12 +667,6 @@ func (b *LoginUserExpectation) Respond400() {
 	b.handler.loginUserExpectResponses.expect(b.handler.tb, b.req, nil, resp, b.opts...)
 }
 
-// RespondWithError sets the expectation to return an error instead of a response.
-func (b *LoginUserExpectation) RespondWithError(err error) {
-	var zeroResp LoginUserResponseObject
-	b.handler.loginUserExpectResponses.expect(b.handler.tb, b.req, nil, zeroResp, append(b.opts, WithError(err))...)
-}
-
 // Handle sets the expectation to invoke a custom handler function with full control over the HTTP response.
 func (b *LoginUserExpectation) Handle(fn func(LoginUserRequestObject, http.ResponseWriter) error) {
 	resp := loginUserRawResponder{req: b.req, fn: fn}
@@ -800,12 +692,6 @@ func (r logoutUserRawResponder) VisitLogoutUserResponse(w http.ResponseWriter) e
 func (b *LogoutUserExpectation) Respond200() {
 	var resp LogoutUser200Response
 	b.handler.logoutUserExpectResponses.expect(b.handler.tb, b.req, nil, resp, b.opts...)
-}
-
-// RespondWithError sets the expectation to return an error instead of a response.
-func (b *LogoutUserExpectation) RespondWithError(err error) {
-	var zeroResp LogoutUserResponseObject
-	b.handler.logoutUserExpectResponses.expect(b.handler.tb, b.req, nil, zeroResp, append(b.opts, WithError(err))...)
 }
 
 // Handle sets the expectation to invoke a custom handler function with full control over the HTTP response.
@@ -847,12 +733,6 @@ func (b *DeleteUserExpectation) Respond404() {
 	b.handler.deleteUserExpectResponses.expect(b.handler.tb, b.req, nil, resp, b.opts...)
 }
 
-// RespondWithError sets the expectation to return an error instead of a response.
-func (b *DeleteUserExpectation) RespondWithError(err error) {
-	var zeroResp DeleteUserResponseObject
-	b.handler.deleteUserExpectResponses.expect(b.handler.tb, b.req, nil, zeroResp, append(b.opts, WithError(err))...)
-}
-
 // Handle sets the expectation to invoke a custom handler function with full control over the HTTP response.
 func (b *DeleteUserExpectation) Handle(fn func(DeleteUserRequestObject, http.ResponseWriter) error) {
 	resp := deleteUserRawResponder{req: b.req, fn: fn}
@@ -889,12 +769,6 @@ func (b *GetUserByNameExpectation) Respond400() {
 func (b *GetUserByNameExpectation) Respond404() {
 	var resp GetUserByName404Response
 	b.handler.getUserByNameExpectResponses.expect(b.handler.tb, b.req, nil, resp, b.opts...)
-}
-
-// RespondWithError sets the expectation to return an error instead of a response.
-func (b *GetUserByNameExpectation) RespondWithError(err error) {
-	var zeroResp GetUserByNameResponseObject
-	b.handler.getUserByNameExpectResponses.expect(b.handler.tb, b.req, nil, zeroResp, append(b.opts, WithError(err))...)
 }
 
 // Handle sets the expectation to invoke a custom handler function with full control over the HTTP response.
@@ -935,12 +809,6 @@ func (b *UpdateUserExpectation) Respond400() {
 func (b *UpdateUserExpectation) Respond404() {
 	var resp UpdateUser404Response
 	b.handler.updateUserExpectResponses.expect(b.handler.tb, b.req, b.rawBody, resp, b.opts...)
-}
-
-// RespondWithError sets the expectation to return an error instead of a response.
-func (b *UpdateUserExpectation) RespondWithError(err error) {
-	var zeroResp UpdateUserResponseObject
-	b.handler.updateUserExpectResponses.expect(b.handler.tb, b.req, b.rawBody, zeroResp, append(b.opts, WithError(err))...)
 }
 
 // Handle sets the expectation to invoke a custom handler function with full control over the HTTP response.
