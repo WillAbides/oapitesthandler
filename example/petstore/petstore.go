@@ -8,7 +8,7 @@ import (
 )
 
 //go:generate go tool oapi-codegen -config ./oapi-codegen.yaml ./openapi.yaml
-//go:generate go tool oapitesthandler --config=./oapi-codegen.yaml --out=internal/petstoretest ./openapi.yaml
+//go:generate go tool oapitesthandler ./openapi.yaml --config ./oapi-codegen.yaml --out internal/petstoretest --models ./internal/oapi
 
 type petStore struct {
 	client oapi.ClientWithResponsesInterface

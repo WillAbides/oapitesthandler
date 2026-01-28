@@ -5,13 +5,22 @@ import (
 	"embed"
 	"errors"
 	"fmt"
+	"go/ast"
+	"go/parser"
+	"go/printer"
+	"go/token"
 	"os"
+	"path"
 	"path/filepath"
+	"strings"
 	"text/template"
 
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/oapi-codegen/oapi-codegen/v2/pkg/codegen"
 	"github.com/oapi-codegen/oapi-codegen/v2/pkg/util"
+	"golang.org/x/tools/go/ast/astutil"
+	"golang.org/x/tools/go/ast/inspector"
+	"golang.org/x/tools/go/packages"
 	"golang.org/x/tools/imports"
 	"gopkg.in/yaml.v3"
 	"mvdan.cc/gofumpt/format"
@@ -25,7 +34,7 @@ var templatesFS embed.FS
 
 var templates = template.Must(template.ParseFS(templatesFS, "templates/*.tmpl"))
 
-func Run(specPath, configPath, outputPath string) error {
+func Run(specPath, configPath, outputPath, modelsPkg string) error {
 	rawOpts, err := os.ReadFile(configPath)
 	if err != nil {
 		return fmt.Errorf("reading config file")
@@ -41,6 +50,11 @@ func Run(specPath, configPath, outputPath string) error {
 	spec, err := loadSpec(opts, specPath)
 	if err != nil {
 		return err
+	}
+
+	err = generateModels(spec, opts, outputPath, modelsPkg)
+	if err != nil {
+		return fmt.Errorf("generating models code: %w", err)
 	}
 
 	err = generateServer(spec, opts, outputPath)
@@ -71,21 +85,138 @@ func loadSpec(opts codegen.Configuration, specPath string) (*openapi3.T, error) 
 	return swagger, nil
 }
 
-func detectPackageName(outDir string) string {
-	base := filepath.Base(outDir)
-	if base != "." && base != "/" {
-		return base
+func resolvePackage(pkgPath string) (*packages.Package, error) {
+	pkgs, err := packages.Load(&packages.Config{Mode: packages.LoadAllSyntax}, pkgPath)
+	if err != nil {
+		return nil, fmt.Errorf("loading models package: %w", err)
 	}
-	abs, err := filepath.Abs(outDir)
+	if len(pkgs) == 0 {
+		return nil, fmt.Errorf("no package found for models package: %s", pkgPath)
+	}
+	pkg := pkgs[0]
+	if len(pkg.Errors) > 0 {
+		return nil, fmt.Errorf("errors loading models package: %v", pkg.Errors)
+	}
+	return pkg, nil
+}
+
+func detectPackageName(outDir string) string {
+	if !path.IsAbs(outDir) && !strings.HasPrefix(outDir, ".") {
+		return filepath.Base(outDir)
+	}
+	abs, err := filepath.Abs(filepath.FromSlash(outDir))
 	if err != nil {
 		return "testhandler"
 	}
 	return filepath.Base(abs)
 }
 
+func generateModels(spec *openapi3.T, opts codegen.Configuration, outDir, modelsPkg string) (errOut error) {
+	opts.Generate = codegen.GenerateOptions{
+		Models: true,
+	}
+
+	generated, err := codegen.Generate(spec, opts)
+	if err != nil {
+		return fmt.Errorf("generating server code: %w", err)
+	}
+
+	if modelsPkg != "" {
+		generated, err = aliasModels(modelsPkg, generated)
+		if err != nil {
+			return err
+		}
+	}
+
+	return writeFile(filepath.Join(outDir, "oapi_models_gen.go"), []byte(generated))
+}
+
+func getModelExports(modelsPkg *packages.Package) (map[string]bool, error) {
+	modelExports := map[string]bool{}
+
+	inspector.New(modelsPkg.Syntax).Nodes([]ast.Node{&ast.TypeSpec{}, &ast.ValueSpec{}}, func(
+		n ast.Node,
+		_ bool,
+	) (proceed bool) {
+		switch spec := n.(type) {
+		case *ast.TypeSpec:
+			if spec.Name.IsExported() {
+				modelExports[spec.Name.Name] = true
+			}
+		case *ast.ValueSpec:
+			for _, name := range spec.Names {
+				if name.IsExported() {
+					modelExports[name.Name] = true
+				}
+			}
+		}
+		return false
+	})
+
+	return modelExports, nil
+}
+
+func aliasModels(modelsPkgPath, generated string) (string, error) {
+	modelsPkg, err := resolvePackage(modelsPkgPath)
+	if err != nil {
+		return "", fmt.Errorf("resolving models package: %w", err)
+	}
+
+	modelExports, err := getModelExports(modelsPkg)
+	if err != nil {
+		return "", fmt.Errorf("getting model exports: %w", err)
+	}
+
+	fset := token.NewFileSet()
+	file, err := parser.ParseFile(fset, "", generated, 0)
+	if err != nil {
+		return "", fmt.Errorf("parsing generated code: %w", err)
+	}
+
+	astutil.AddNamedImport(fset, file, "clientpkg", modelsPkg.PkgPath)
+
+	replaceWithClientPkgRefs(file, modelExports)
+
+	var buf bytes.Buffer
+	err = printer.Fprint(&buf, fset, file)
+	if err != nil {
+		return "", fmt.Errorf("printing modified code: %w", err)
+	}
+
+	return buf.String(), nil
+}
+
+func replaceWithClientPkgRefs(file *ast.File, modelExports map[string]bool) {
+	inspector.New([]*ast.File{file}).Nodes(
+		[]ast.Node{&ast.TypeSpec{}, &ast.ValueSpec{}},
+		func(n ast.Node, _ bool) bool {
+			switch spec := n.(type) {
+			case *ast.TypeSpec:
+				if modelExports[spec.Name.Name] {
+					spec.Assign = token.Pos(1) // Mark as type alias
+					spec.Type = &ast.SelectorExpr{
+						X:   &ast.Ident{Name: "clientpkg"},
+						Sel: &ast.Ident{Name: spec.Name.Name},
+					}
+				}
+			case *ast.ValueSpec:
+				spec.Type = nil // Let type be inferred
+				for i, name := range spec.Names {
+					if modelExports[name.Name] && i < len(spec.Values) {
+						spec.Values[i] = &ast.SelectorExpr{
+							X:   &ast.Ident{Name: "clientpkg"},
+							Sel: &ast.Ident{Name: name.Name},
+						}
+					}
+				}
+			}
+			return false
+		},
+	)
+}
+
 func generateServer(spec *openapi3.T, opts codegen.Configuration, outDir string) (errOut error) {
 	opts.Generate = codegen.GenerateOptions{
-		Models:        true,
 		StdHTTPServer: true,
 		Strict:        true,
 	}

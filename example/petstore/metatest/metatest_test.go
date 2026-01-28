@@ -26,10 +26,10 @@ func TestGeneratedHandler(t *testing.T) {
 		client, err := oapi.NewClientWithResponses(server.URL)
 		require.NoError(t, err)
 
-		pet := &petstoretest.Pet{
+		pet := &oapi.Pet{
 			Id:     ptr(int32(1)),
 			Name:   "Marco",
-			Status: ptr(petstoretest.PetStatusSold),
+			Status: ptr(oapi.PetStatusSold),
 		}
 
 		// Expect the same request twice
@@ -56,16 +56,16 @@ func TestGeneratedHandler(t *testing.T) {
 		client, err := oapi.NewClientWithResponses(server.URL)
 		require.NoError(t, err)
 
-		marco := &petstoretest.Pet{
+		marco := &oapi.Pet{
 			Id:     ptr(int32(1)),
 			Name:   "Marco",
-			Status: ptr(petstoretest.PetStatusSold),
+			Status: ptr(oapi.PetStatusSold),
 		}
 
-		dolly := &petstoretest.Pet{
+		dolly := &oapi.Pet{
 			Id:   ptr(int32(2)),
 			Name: "Dolly",
-			Category: &petstoretest.Category{
+			Category: &oapi.Category{
 				Name: ptr("Puppy"),
 			},
 		}
@@ -96,7 +96,7 @@ func TestGeneratedHandler(t *testing.T) {
 		createdAt := time.Now().Add(-24 * time.Hour).UTC().Truncate(time.Second)
 		updatedAt := time.Now().UTC().Truncate(time.Second)
 
-		petWithCustomTypes := petstoretest.PetWithCustomTypes{
+		petWithCustomTypes := oapi.PetWithCustomTypes{
 			Id:             ptr(int64(1)),
 			Name:           ptr("Fluffy"),
 			RegistrationId: &registrationID,
@@ -129,7 +129,7 @@ func TestGeneratedHandler(t *testing.T) {
 			"weight": "30kg",
 		}
 
-		handler.ExpectGetPetMetadata(1, nil).RespondJSON200(petstoretest.GetPetMetadata200JSONResponse(metadata))
+		handler.ExpectGetPetMetadata(1, nil).RespondJSON200(metadata)
 
 		resp, err := client.GetPetMetadataWithResponse(t.Context(), 1, nil)
 		require.NoError(t, err)
@@ -145,16 +145,16 @@ func TestGeneratedHandler(t *testing.T) {
 		client, err := oapi.NewClientWithResponses(server.URL)
 		require.NoError(t, err)
 
-		marco := &petstoretest.Pet{
+		marco := &oapi.Pet{
 			Id:     ptr(int32(1)),
 			Name:   "Marco",
-			Status: ptr(petstoretest.PetStatusSold),
+			Status: ptr(oapi.PetStatusSold),
 		}
 
-		dolly := &petstoretest.Pet{
+		dolly := &oapi.Pet{
 			Id:   ptr(int32(2)),
 			Name: "Dolly",
-			Category: &petstoretest.Category{
+			Category: &oapi.Category{
 				Name: ptr("Puppy"),
 			},
 		}
@@ -162,9 +162,9 @@ func TestGeneratedHandler(t *testing.T) {
 		// Test multiple different operations on the same handler
 		handler.ExpectGetPetById(1).RespondJSON200(petstoretest.GetPetById200JSONResponse(*marco))
 
-		handler.ExpectFindPetsByStatus(&petstoretest.FindPetsByStatusParams{
-			Status: petstoretest.FindPetsByStatusParamsStatusAvailable,
-		}).RespondJSON200(petstoretest.FindPetsByStatus200JSONResponse([]petstoretest.Pet{*dolly}))
+		handler.ExpectFindPetsByStatus(&oapi.FindPetsByStatusParams{
+			Status: oapi.FindPetsByStatusParamsStatusAvailable,
+		}).RespondJSON200([]oapi.Pet{*dolly})
 
 		// Call GetPetById
 		resp1, err := client.GetPetByIdWithResponse(t.Context(), 1)
@@ -194,10 +194,10 @@ func TestGeneratedHandler(t *testing.T) {
 		client, err := oapi.NewClientWithResponses(server.URL)
 		require.NoError(t, err)
 
-		pet := &petstoretest.Pet{
+		pet := &oapi.Pet{
 			Id:     ptr(int32(1)),
 			Name:   "Marco",
-			Status: ptr(petstoretest.PetStatusSold),
+			Status: ptr(oapi.PetStatusSold),
 		}
 
 		// Expect the same request 3 times
@@ -219,10 +219,10 @@ func TestGeneratedHandler(t *testing.T) {
 		client, err := oapi.NewClientWithResponses(server.URL)
 		require.NoError(t, err)
 
-		pet := &petstoretest.Pet{
+		pet := &oapi.Pet{
 			Id:     ptr(int32(1)),
 			Name:   "Marco",
-			Status: ptr(petstoretest.PetStatusSold),
+			Status: ptr(oapi.PetStatusSold),
 		}
 
 		// Expect at least 2 calls, but allow more
@@ -252,7 +252,7 @@ func TestGeneratedHandler(t *testing.T) {
 		handler.ExpectAddPetWithBody("application/xml", xmlBody).RespondJSON201(petstoretest.AddPet201JSONResponse{
 			Id:     ptr(int32(1)),
 			Name:   "Fluffy",
-			Status: ptr(petstoretest.PetStatusAvailable),
+			Status: ptr(oapi.PetStatusAvailable),
 		})
 
 		// Make request with XML body
@@ -276,7 +276,7 @@ func TestGeneratedHandler(t *testing.T) {
 		require.NoError(t, err)
 
 		// Set up expectation using typed method
-		handler.ExpectUpdateUser("john", petstoretest.UpdateUserJSONRequestBody{
+		handler.ExpectUpdateUser("john", oapi.UpdateUserJSONRequestBody{
 			Id:       ptr(int64(1)),
 			Username: ptr("john"),
 		}).Respond200()
@@ -526,7 +526,7 @@ func TestHandleMethod(t *testing.T) {
 		require.NoError(t, err)
 
 		// Use Handle with an operation that has a request body
-		handler.ExpectUpdateUser("john", petstoretest.UpdateUserJSONRequestBody{
+		handler.ExpectUpdateUser("john", oapi.UpdateUserJSONRequestBody{
 			Id:       ptr(int64(1)),
 			Username: ptr("john"),
 		}).Handle(func(req petstoretest.UpdateUserRequestObject, w http.ResponseWriter) error {

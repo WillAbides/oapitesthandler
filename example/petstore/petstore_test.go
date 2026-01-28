@@ -27,7 +27,7 @@ func TestPetStoreService(t *testing.T) {
 		handler.ExpectGetPetById(1).RespondJSON200(petstoretest.GetPetById200JSONResponse{
 			Id:     ptr(int32(1)),
 			Name:   "Marco",
-			Status: ptr(petstoretest.PetStatusSold),
+			Status: ptr(oapi.PetStatusSold),
 		})
 
 		// Call the service method - it will make HTTP request to our mock server
@@ -89,16 +89,16 @@ func TestPetStoreService(t *testing.T) {
 		handler.ExpectGetPetById(1).RespondJSON200(petstoretest.GetPetById200JSONResponse{
 			Id:     ptr(int32(1)),
 			Name:   "Marco",
-			Status: ptr(petstoretest.PetStatusSold),
+			Status: ptr(oapi.PetStatusSold),
 		})
 
-		handler.ExpectGetPetById(2).RespondJSON200(petstoretest.GetPetById200JSONResponse{
+		handler.ExpectGetPetById(2).RespondJSON200(petstoretest.GetPetById200JSONResponse(oapi.Pet{
 			Id:   ptr(int32(2)),
 			Name: "Dolly",
-			Category: &petstoretest.Category{
+			Category: &oapi.Category{
 				Name: ptr("Puppy"),
 			},
-		})
+		}))
 
 		handler.ExpectGetPetById(3).RespondJSON404(petstoretest.GetPetById404JSONResponse{
 			Message: ptr("Not found"),
@@ -123,11 +123,11 @@ func TestPetStoreService(t *testing.T) {
 
 		handler.ExpectUpdatePet(petstoretest.UpdatePetJSONRequestBody{
 			Id:     ptr(int32(1)),
-			Status: ptr(petstoretest.PetStatusSold),
+			Status: ptr(oapi.PetStatusSold),
 		}).RespondJSON200(petstoretest.UpdatePet200JSONResponse{
 			Id:     ptr(int32(1)),
 			Name:   "Marco",
-			Status: ptr(petstoretest.PetStatusSold),
+			Status: ptr(oapi.PetStatusSold),
 		})
 
 		err := store.updatePetStatus(t.Context(), 1, petStatusSold)
