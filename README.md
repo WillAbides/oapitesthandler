@@ -52,9 +52,9 @@ func TestMyService(t *testing.T) {
 
     // Create your service that uses an oapi-codegen client
     client, err := oapi.NewClientWithResponses(server.URL)
-	require.NoError(t, err)
+    require.NoError(t, err)
 	
-	petstoreService := NewPetstoreService(client)
+    petstoreService := NewPetstoreService(client)
 
     // Set expectations
     handler.ExpectGetPetById(1).RespondJSON200(petstoretest.GetPetById200JSONResponse{
