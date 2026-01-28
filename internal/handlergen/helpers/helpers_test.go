@@ -425,4 +425,109 @@ func TestExpectations(t *testing.T) {
 		tb.RunCleanups()
 		tb.AssertNoErrors()
 	})
+
+	t.Run("MinTimes option - exactly n calls", func(t *testing.T) {
+		tb := testutil.NewTB(t)
+		exp := &expectResponses[testRequest, testResponse]{}
+
+		req := testRequest{ID: 1, Name: "test"}
+		resp := testResponse{Status: 200, Message: "ok"}
+
+		exp.expect(tb, req, nil, resp, MinTimes(3))
+
+		for i := range 3 {
+			got, err := exp.getResponse(tb, req, nil)
+			require.NoError(t, err, "call %d", i+1)
+			assert.Equal(t, resp.Status, got.Status, "call %d", i+1)
+		}
+
+		tb.RunCleanups()
+		tb.AssertNoErrors()
+	})
+
+	t.Run("MinTimes option - more than n calls", func(t *testing.T) {
+		tb := testutil.NewTB(t)
+		exp := &expectResponses[testRequest, testResponse]{}
+
+		req := testRequest{ID: 1, Name: "test"}
+		resp := testResponse{Status: 200, Message: "ok"}
+
+		exp.expect(tb, req, nil, resp, MinTimes(3))
+
+		// Call 5 times (more than the minimum of 3)
+		for i := range 5 {
+			got, err := exp.getResponse(tb, req, nil)
+			require.NoError(t, err, "call %d", i+1)
+			assert.Equal(t, resp.Status, got.Status, "call %d", i+1)
+		}
+
+		tb.RunCleanups()
+		tb.AssertNoErrors()
+	})
+
+	t.Run("MinTimes option - fewer than n calls triggers error", func(t *testing.T) {
+		tb := testutil.NewTB(t)
+		exp := &expectResponses[testRequest, testResponse]{}
+
+		req := testRequest{ID: 1, Name: "test"}
+		resp := testResponse{Status: 200, Message: "ok"}
+
+		exp.expect(tb, req, nil, resp, MinTimes(3))
+
+		// Only call 2 times (less than the minimum of 3)
+		for i := range 2 {
+			got, err := exp.getResponse(tb, req, nil)
+			require.NoError(t, err, "call %d", i+1)
+			assert.Equal(t, resp.Status, got.Status, "call %d", i+1)
+		}
+
+		tb.RunCleanups()
+		tb.AssertErrors() // Should have error because minimum not met
+	})
+
+	t.Run("MinTimes(0) acts as stub - unlimited calls", func(t *testing.T) {
+		tb := testutil.NewTB(t)
+		exp := &expectResponses[testRequest, testResponse]{}
+
+		req := testRequest{ID: 1, Name: "test"}
+		resp := testResponse{Status: 200, Message: "ok"}
+
+		exp.expect(tb, req, nil, resp, MinTimes(0))
+
+		// Call multiple times with no limit
+		for i := range 10 {
+			got, err := exp.getResponse(tb, req, nil)
+			require.NoError(t, err, "call %d", i+1)
+			assert.Equal(t, resp.Status, got.Status, "call %d", i+1)
+		}
+
+		tb.RunCleanups()
+		tb.AssertNoErrors()
+	})
+
+	t.Run("MinTimes(0) acts as stub - zero calls", func(t *testing.T) {
+		tb := testutil.NewTB(t)
+		exp := &expectResponses[testRequest, testResponse]{}
+
+		req := testRequest{ID: 1, Name: "test"}
+		resp := testResponse{Status: 200, Message: "ok"}
+
+		exp.expect(tb, req, nil, resp, MinTimes(0))
+
+		// Don't call at all - should still pass cleanup
+		tb.RunCleanups()
+		tb.AssertNoErrors()
+	})
+
+	t.Run("Times panics on negative value", func(t *testing.T) {
+		assert.PanicsWithValue(t, "Times: n must be non-negative", func() {
+			Times(-1)
+		})
+	})
+
+	t.Run("MinTimes panics on negative value", func(t *testing.T) {
+		assert.PanicsWithValue(t, "MinTimes: n must be non-negative", func() {
+			MinTimes(-1)
+		})
+	})
 }
