@@ -59,14 +59,26 @@ func (r {{.LowercaseOperationID}}RawResponder) Visit{{.OperationID}}Response(w h
 
 {{range .ResponseTypes -}}
 // {{.MethodName}} sets the expectation to return a {{.StatusCode}} response{{if .ContentType}} with {{.ContentType}} content{{end}}.
-func (b *{{$op.BuilderTypeName}}) {{.MethodName}}({{if not .IsEmpty}}resp {{.TypeName}}{{end}}) {
+func (b *{{$op.BuilderTypeName}}) {{.MethodName}}({{if not .IsEmpty}}{{if .IsAlias}}resp {{.UnderlyingType}}{{else}}resp {{.TypeName}}{{end}}{{end}}) {
 	{{if .IsEmpty -}}
 	var resp {{.TypeName}}
+	{{else if .IsAlias -}}
+	typedResp := {{.TypeName}}(resp)
+	{{else -}}
+	typedResp := resp
 	{{end -}}
 	{{if $op.HasGenericBody -}}
+	{{if .IsEmpty -}}
 	b.handler.{{$op.ExpectationField}}.expect(b.handler.tb, b.req, b.rawBody, resp, b.opts...)
 	{{else -}}
+	b.handler.{{$op.ExpectationField}}.expect(b.handler.tb, b.req, b.rawBody, typedResp, b.opts...)
+	{{end -}}
+	{{else -}}
+	{{if .IsEmpty -}}
 	b.handler.{{$op.ExpectationField}}.expect(b.handler.tb, b.req, nil, resp, b.opts...)
+	{{else -}}
+	b.handler.{{$op.ExpectationField}}.expect(b.handler.tb, b.req, nil, typedResp, b.opts...)
+	{{end -}}
 	{{end -}}
 }
 

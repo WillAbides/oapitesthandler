@@ -6,6 +6,8 @@ import (
 	"bytes"
 	"io"
 	"net/http"
+
+	externalRef0 "github.com/willabides/oapitesthandler/example/petstore/internal/common/oapi"
 )
 
 type TestHandler struct {
@@ -65,8 +67,9 @@ func (r addPetRawResponder) VisitAddPetResponse(w http.ResponseWriter) error {
 }
 
 // RespondJSON201 sets the expectation to return a 201 response with JSON content.
-func (b *AddPetExpectation) RespondJSON201(resp AddPet201JSONResponse) {
-	b.handler.addPetExpectResponses.expect(b.handler.tb, b.req, b.rawBody, resp, b.opts...)
+func (b *AddPetExpectation) RespondJSON201(resp Pet) {
+	typedResp := AddPet201JSONResponse(resp)
+	b.handler.addPetExpectResponses.expect(b.handler.tb, b.req, b.rawBody, typedResp, b.opts...)
 }
 
 // Respond400 sets the expectation to return a 400 response.
@@ -104,23 +107,27 @@ func (r updatePetRawResponder) VisitUpdatePetResponse(w http.ResponseWriter) err
 }
 
 // RespondJSON200 sets the expectation to return a 200 response with JSON content.
-func (b *UpdatePetExpectation) RespondJSON200(resp UpdatePet200JSONResponse) {
-	b.handler.updatePetExpectResponses.expect(b.handler.tb, b.req, b.rawBody, resp, b.opts...)
+func (b *UpdatePetExpectation) RespondJSON200(resp Pet) {
+	typedResp := UpdatePet200JSONResponse(resp)
+	b.handler.updatePetExpectResponses.expect(b.handler.tb, b.req, b.rawBody, typedResp, b.opts...)
 }
 
 // RespondJSON400 sets the expectation to return a 400 response with JSON content.
 func (b *UpdatePetExpectation) RespondJSON400(resp UpdatePet400JSONResponse) {
-	b.handler.updatePetExpectResponses.expect(b.handler.tb, b.req, b.rawBody, resp, b.opts...)
+	typedResp := resp
+	b.handler.updatePetExpectResponses.expect(b.handler.tb, b.req, b.rawBody, typedResp, b.opts...)
 }
 
 // RespondJSON404 sets the expectation to return a 404 response with JSON content.
-func (b *UpdatePetExpectation) RespondJSON404(resp UpdatePet404JSONResponse) {
-	b.handler.updatePetExpectResponses.expect(b.handler.tb, b.req, b.rawBody, resp, b.opts...)
+func (b *UpdatePetExpectation) RespondJSON404(resp Error) {
+	typedResp := UpdatePet404JSONResponse(resp)
+	b.handler.updatePetExpectResponses.expect(b.handler.tb, b.req, b.rawBody, typedResp, b.opts...)
 }
 
 // RespondJSON422 sets the expectation to return a 422 response with JSON content.
-func (b *UpdatePetExpectation) RespondJSON422(resp UpdatePet422JSONResponse) {
-	b.handler.updatePetExpectResponses.expect(b.handler.tb, b.req, b.rawBody, resp, b.opts...)
+func (b *UpdatePetExpectation) RespondJSON422(resp Error) {
+	typedResp := UpdatePet422JSONResponse(resp)
+	b.handler.updatePetExpectResponses.expect(b.handler.tb, b.req, b.rawBody, typedResp, b.opts...)
 }
 
 // Handle sets the expectation to invoke a custom handler function with full control over the HTTP response.
@@ -145,8 +152,9 @@ func (r findPetsByStatusRawResponder) VisitFindPetsByStatusResponse(w http.Respo
 }
 
 // RespondJSON200 sets the expectation to return a 200 response with JSON content.
-func (b *FindPetsByStatusExpectation) RespondJSON200(resp FindPetsByStatus200JSONResponse) {
-	b.handler.findPetsByStatusExpectResponses.expect(b.handler.tb, b.req, nil, resp, b.opts...)
+func (b *FindPetsByStatusExpectation) RespondJSON200(resp []Pet) {
+	typedResp := FindPetsByStatus200JSONResponse(resp)
+	b.handler.findPetsByStatusExpectResponses.expect(b.handler.tb, b.req, nil, typedResp, b.opts...)
 }
 
 // Respond400 sets the expectation to return a 400 response.
@@ -177,8 +185,9 @@ func (r findPetsByTagsRawResponder) VisitFindPetsByTagsResponse(w http.ResponseW
 }
 
 // RespondJSON200 sets the expectation to return a 200 response with JSON content.
-func (b *FindPetsByTagsExpectation) RespondJSON200(resp FindPetsByTags200JSONResponse) {
-	b.handler.findPetsByTagsExpectResponses.expect(b.handler.tb, b.req, nil, resp, b.opts...)
+func (b *FindPetsByTagsExpectation) RespondJSON200(resp []Pet) {
+	typedResp := FindPetsByTags200JSONResponse(resp)
+	b.handler.findPetsByTagsExpectResponses.expect(b.handler.tb, b.req, nil, typedResp, b.opts...)
 }
 
 // Respond400 sets the expectation to return a 400 response.
@@ -210,7 +219,8 @@ func (r deletePetRawResponder) VisitDeletePetResponse(w http.ResponseWriter) err
 
 // RespondJSON200 sets the expectation to return a 200 response with JSON content.
 func (b *DeletePetExpectation) RespondJSON200(resp DeletePet200JSONResponse) {
-	b.handler.deletePetExpectResponses.expect(b.handler.tb, b.req, nil, resp, b.opts...)
+	typedResp := resp
+	b.handler.deletePetExpectResponses.expect(b.handler.tb, b.req, nil, typedResp, b.opts...)
 }
 
 // Respond204 sets the expectation to return a 204 response.
@@ -221,12 +231,14 @@ func (b *DeletePetExpectation) Respond204() {
 
 // RespondJSON400 sets the expectation to return a 400 response with JSON content.
 func (b *DeletePetExpectation) RespondJSON400(resp DeletePet400JSONResponse) {
-	b.handler.deletePetExpectResponses.expect(b.handler.tb, b.req, nil, resp, b.opts...)
+	typedResp := resp
+	b.handler.deletePetExpectResponses.expect(b.handler.tb, b.req, nil, typedResp, b.opts...)
 }
 
 // RespondJSON404 sets the expectation to return a 404 response with JSON content.
 func (b *DeletePetExpectation) RespondJSON404(resp DeletePet404JSONResponse) {
-	b.handler.deletePetExpectResponses.expect(b.handler.tb, b.req, nil, resp, b.opts...)
+	typedResp := resp
+	b.handler.deletePetExpectResponses.expect(b.handler.tb, b.req, nil, typedResp, b.opts...)
 }
 
 // Handle sets the expectation to invoke a custom handler function with full control over the HTTP response.
@@ -251,23 +263,27 @@ func (r getPetByIdRawResponder) VisitGetPetByIdResponse(w http.ResponseWriter) e
 }
 
 // RespondJSON200 sets the expectation to return a 200 response with JSON content.
-func (b *GetPetByIdExpectation) RespondJSON200(resp GetPetById200JSONResponse) {
-	b.handler.getPetByIdExpectResponses.expect(b.handler.tb, b.req, nil, resp, b.opts...)
+func (b *GetPetByIdExpectation) RespondJSON200(resp Pet) {
+	typedResp := GetPetById200JSONResponse(resp)
+	b.handler.getPetByIdExpectResponses.expect(b.handler.tb, b.req, nil, typedResp, b.opts...)
 }
 
 // RespondApplicationVndPetstorePlusJSON200 sets the expectation to return a 200 response with ApplicationVndPetstorePlusJSON content.
-func (b *GetPetByIdExpectation) RespondApplicationVndPetstorePlusJSON200(resp GetPetById200ApplicationVndPetstorePlusJSONResponse) {
-	b.handler.getPetByIdExpectResponses.expect(b.handler.tb, b.req, nil, resp, b.opts...)
+func (b *GetPetByIdExpectation) RespondApplicationVndPetstorePlusJSON200(resp Pet) {
+	typedResp := GetPetById200ApplicationVndPetstorePlusJSONResponse(resp)
+	b.handler.getPetByIdExpectResponses.expect(b.handler.tb, b.req, nil, typedResp, b.opts...)
 }
 
 // RespondJSON400 sets the expectation to return a 400 response with JSON content.
 func (b *GetPetByIdExpectation) RespondJSON400(resp GetPetById400JSONResponse) {
-	b.handler.getPetByIdExpectResponses.expect(b.handler.tb, b.req, nil, resp, b.opts...)
+	typedResp := resp
+	b.handler.getPetByIdExpectResponses.expect(b.handler.tb, b.req, nil, typedResp, b.opts...)
 }
 
 // RespondJSON404 sets the expectation to return a 404 response with JSON content.
-func (b *GetPetByIdExpectation) RespondJSON404(resp GetPetById404JSONResponse) {
-	b.handler.getPetByIdExpectResponses.expect(b.handler.tb, b.req, nil, resp, b.opts...)
+func (b *GetPetByIdExpectation) RespondJSON404(resp Error) {
+	typedResp := GetPetById404JSONResponse(resp)
+	b.handler.getPetByIdExpectResponses.expect(b.handler.tb, b.req, nil, typedResp, b.opts...)
 }
 
 // Handle sets the expectation to invoke a custom handler function with full control over the HTTP response.
@@ -292,8 +308,9 @@ func (r updatePetWithFormRawResponder) VisitUpdatePetWithFormResponse(w http.Res
 }
 
 // RespondJSON200 sets the expectation to return a 200 response with JSON content.
-func (b *UpdatePetWithFormExpectation) RespondJSON200(resp UpdatePetWithForm200JSONResponse) {
-	b.handler.updatePetWithFormExpectResponses.expect(b.handler.tb, b.req, nil, resp, b.opts...)
+func (b *UpdatePetWithFormExpectation) RespondJSON200(resp Pet) {
+	typedResp := UpdatePetWithForm200JSONResponse(resp)
+	b.handler.updatePetWithFormExpectResponses.expect(b.handler.tb, b.req, nil, typedResp, b.opts...)
 }
 
 // Respond400 sets the expectation to return a 400 response.
@@ -324,8 +341,9 @@ func (r getPetMetadataRawResponder) VisitGetPetMetadataResponse(w http.ResponseW
 }
 
 // RespondJSON200 sets the expectation to return a 200 response with JSON content.
-func (b *GetPetMetadataExpectation) RespondJSON200(resp GetPetMetadata200JSONResponse) {
-	b.handler.getPetMetadataExpectResponses.expect(b.handler.tb, b.req, nil, resp, b.opts...)
+func (b *GetPetMetadataExpectation) RespondJSON200(resp map[string]string) {
+	typedResp := GetPetMetadata200JSONResponse(resp)
+	b.handler.getPetMetadataExpectResponses.expect(b.handler.tb, b.req, nil, typedResp, b.opts...)
 }
 
 // Respond204 sets the expectation to return a 204 response.
@@ -336,7 +354,8 @@ func (b *GetPetMetadataExpectation) Respond204() {
 
 // RespondJSON404 sets the expectation to return a 404 response with JSON content.
 func (b *GetPetMetadataExpectation) RespondJSON404(resp GetPetMetadata404JSONResponse) {
-	b.handler.getPetMetadataExpectResponses.expect(b.handler.tb, b.req, nil, resp, b.opts...)
+	typedResp := resp
+	b.handler.getPetMetadataExpectResponses.expect(b.handler.tb, b.req, nil, typedResp, b.opts...)
 }
 
 // Handle sets the expectation to invoke a custom handler function with full control over the HTTP response.
@@ -361,13 +380,15 @@ func (r getPetPhotoByIdRawResponder) VisitGetPetPhotoByIdResponse(w http.Respons
 }
 
 // RespondJSON200 sets the expectation to return a 200 response with JSON content.
-func (b *GetPetPhotoByIdExpectation) RespondJSON200(resp GetPetPhotoById200JSONResponse) {
-	b.handler.getPetPhotoByIdExpectResponses.expect(b.handler.tb, b.req, nil, resp, b.opts...)
+func (b *GetPetPhotoByIdExpectation) RespondJSON200(resp PetPhoto) {
+	typedResp := GetPetPhotoById200JSONResponse(resp)
+	b.handler.getPetPhotoByIdExpectResponses.expect(b.handler.tb, b.req, nil, typedResp, b.opts...)
 }
 
 // RespondJSON404 sets the expectation to return a 404 response with JSON content.
 func (b *GetPetPhotoByIdExpectation) RespondJSON404(resp GetPetPhotoById404JSONResponse) {
-	b.handler.getPetPhotoByIdExpectResponses.expect(b.handler.tb, b.req, nil, resp, b.opts...)
+	typedResp := resp
+	b.handler.getPetPhotoByIdExpectResponses.expect(b.handler.tb, b.req, nil, typedResp, b.opts...)
 }
 
 // Handle sets the expectation to invoke a custom handler function with full control over the HTTP response.
@@ -392,13 +413,15 @@ func (r getPetRegistrationRawResponder) VisitGetPetRegistrationResponse(w http.R
 }
 
 // RespondJSON200 sets the expectation to return a 200 response with JSON content.
-func (b *GetPetRegistrationExpectation) RespondJSON200(resp GetPetRegistration200JSONResponse) {
-	b.handler.getPetRegistrationExpectResponses.expect(b.handler.tb, b.req, nil, resp, b.opts...)
+func (b *GetPetRegistrationExpectation) RespondJSON200(resp PetWithCustomTypes) {
+	typedResp := GetPetRegistration200JSONResponse(resp)
+	b.handler.getPetRegistrationExpectResponses.expect(b.handler.tb, b.req, nil, typedResp, b.opts...)
 }
 
 // RespondJSON404 sets the expectation to return a 404 response with JSON content.
-func (b *GetPetRegistrationExpectation) RespondJSON404(resp GetPetRegistration404JSONResponse) {
-	b.handler.getPetRegistrationExpectResponses.expect(b.handler.tb, b.req, nil, resp, b.opts...)
+func (b *GetPetRegistrationExpectation) RespondJSON404(resp Error) {
+	typedResp := GetPetRegistration404JSONResponse(resp)
+	b.handler.getPetRegistrationExpectResponses.expect(b.handler.tb, b.req, nil, typedResp, b.opts...)
 }
 
 // Handle sets the expectation to invoke a custom handler function with full control over the HTTP response.
@@ -424,8 +447,9 @@ func (r uploadFileRawResponder) VisitUploadFileResponse(w http.ResponseWriter) e
 }
 
 // RespondJSON200 sets the expectation to return a 200 response with JSON content.
-func (b *UploadFileExpectation) RespondJSON200(resp UploadFile200JSONResponse) {
-	b.handler.uploadFileExpectResponses.expect(b.handler.tb, b.req, b.rawBody, resp, b.opts...)
+func (b *UploadFileExpectation) RespondJSON200(resp ApiResponse) {
+	typedResp := UploadFile200JSONResponse(resp)
+	b.handler.uploadFileExpectResponses.expect(b.handler.tb, b.req, b.rawBody, typedResp, b.opts...)
 }
 
 // Respond400 sets the expectation to return a 400 response.
@@ -462,8 +486,9 @@ func (r getStoreInventoryRawResponder) VisitGetStoreInventoryResponse(w http.Res
 }
 
 // RespondJSON200 sets the expectation to return a 200 response with JSON content.
-func (b *GetStoreInventoryExpectation) RespondJSON200(resp GetStoreInventory200JSONResponse) {
-	b.handler.getStoreInventoryExpectResponses.expect(b.handler.tb, b.req, nil, resp, b.opts...)
+func (b *GetStoreInventoryExpectation) RespondJSON200(resp map[string]int32) {
+	typedResp := GetStoreInventory200JSONResponse(resp)
+	b.handler.getStoreInventoryExpectResponses.expect(b.handler.tb, b.req, nil, typedResp, b.opts...)
 }
 
 // Handle sets the expectation to invoke a custom handler function with full control over the HTTP response.
@@ -489,8 +514,9 @@ func (r postStoreOrderRawResponder) VisitPostStoreOrderResponse(w http.ResponseW
 }
 
 // RespondJSON200 sets the expectation to return a 200 response with JSON content.
-func (b *PostStoreOrderExpectation) RespondJSON200(resp PostStoreOrder200JSONResponse) {
-	b.handler.postStoreOrderExpectResponses.expect(b.handler.tb, b.req, b.rawBody, resp, b.opts...)
+func (b *PostStoreOrderExpectation) RespondJSON200(resp Order) {
+	typedResp := PostStoreOrder200JSONResponse(resp)
+	b.handler.postStoreOrderExpectResponses.expect(b.handler.tb, b.req, b.rawBody, typedResp, b.opts...)
 }
 
 // Respond400 sets the expectation to return a 400 response.
@@ -566,8 +592,9 @@ func (r getOrderByIdRawResponder) VisitGetOrderByIdResponse(w http.ResponseWrite
 }
 
 // RespondJSON200 sets the expectation to return a 200 response with JSON content.
-func (b *GetOrderByIdExpectation) RespondJSON200(resp GetOrderById200JSONResponse) {
-	b.handler.getOrderByIdExpectResponses.expect(b.handler.tb, b.req, nil, resp, b.opts...)
+func (b *GetOrderByIdExpectation) RespondJSON200(resp Order) {
+	typedResp := GetOrderById200JSONResponse(resp)
+	b.handler.getOrderByIdExpectResponses.expect(b.handler.tb, b.req, nil, typedResp, b.opts...)
 }
 
 // Respond400 sets the expectation to return a 400 response.
@@ -605,8 +632,9 @@ func (r createUserRawResponder) VisitCreateUserResponse(w http.ResponseWriter) e
 }
 
 // RespondJSON200 sets the expectation to return a 200 response with JSON content.
-func (b *CreateUserExpectation) RespondJSON200(resp CreateUser200JSONResponse) {
-	b.handler.createUserExpectResponses.expect(b.handler.tb, b.req, b.rawBody, resp, b.opts...)
+func (b *CreateUserExpectation) RespondJSON200(resp externalRef0.User) {
+	typedResp := CreateUser200JSONResponse(resp)
+	b.handler.createUserExpectResponses.expect(b.handler.tb, b.req, b.rawBody, typedResp, b.opts...)
 }
 
 // Handle sets the expectation to invoke a custom handler function with full control over the HTTP response.
@@ -631,8 +659,9 @@ func (r createUsersWithListInputRawResponder) VisitCreateUsersWithListInputRespo
 }
 
 // RespondJSON200 sets the expectation to return a 200 response with JSON content.
-func (b *CreateUsersWithListInputExpectation) RespondJSON200(resp CreateUsersWithListInput200JSONResponse) {
-	b.handler.createUsersWithListInputExpectResponses.expect(b.handler.tb, b.req, nil, resp, b.opts...)
+func (b *CreateUsersWithListInputExpectation) RespondJSON200(resp externalRef0.User) {
+	typedResp := CreateUsersWithListInput200JSONResponse(resp)
+	b.handler.createUsersWithListInputExpectResponses.expect(b.handler.tb, b.req, nil, typedResp, b.opts...)
 }
 
 // Handle sets the expectation to invoke a custom handler function with full control over the HTTP response.
@@ -658,7 +687,8 @@ func (r loginUserRawResponder) VisitLoginUserResponse(w http.ResponseWriter) err
 
 // RespondJSON200 sets the expectation to return a 200 response with JSON content.
 func (b *LoginUserExpectation) RespondJSON200(resp LoginUser200JSONResponse) {
-	b.handler.loginUserExpectResponses.expect(b.handler.tb, b.req, nil, resp, b.opts...)
+	typedResp := resp
+	b.handler.loginUserExpectResponses.expect(b.handler.tb, b.req, nil, typedResp, b.opts...)
 }
 
 // Respond400 sets the expectation to return a 400 response.
@@ -755,8 +785,9 @@ func (r getUserByNameRawResponder) VisitGetUserByNameResponse(w http.ResponseWri
 }
 
 // RespondJSON200 sets the expectation to return a 200 response with JSON content.
-func (b *GetUserByNameExpectation) RespondJSON200(resp GetUserByName200JSONResponse) {
-	b.handler.getUserByNameExpectResponses.expect(b.handler.tb, b.req, nil, resp, b.opts...)
+func (b *GetUserByNameExpectation) RespondJSON200(resp externalRef0.User) {
+	typedResp := GetUserByName200JSONResponse(resp)
+	b.handler.getUserByNameExpectResponses.expect(b.handler.tb, b.req, nil, typedResp, b.opts...)
 }
 
 // Respond400 sets the expectation to return a 400 response.

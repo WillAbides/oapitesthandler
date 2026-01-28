@@ -24,7 +24,7 @@ func TestPetStoreService(t *testing.T) {
 		store := newTestStore(t, server.URL)
 
 		// Set expectation on the mock server
-		handler.ExpectGetPetById(1).RespondJSON200(petstoretest.GetPetById200JSONResponse{
+		handler.ExpectGetPetById(1).RespondJSON200(oapi.Pet{
 			Id:     ptr(int32(1)),
 			Name:   "Marco",
 			Status: ptr(oapi.PetStatusSold),
@@ -48,7 +48,7 @@ func TestPetStoreService(t *testing.T) {
 
 		store := newTestStore(t, server.URL)
 
-		handler.ExpectGetPetById(999).RespondJSON404(petstoretest.GetPetById404JSONResponse{
+		handler.ExpectGetPetById(999).RespondJSON404(oapi.Error{
 			Message: ptr("Pet not found"),
 		})
 
@@ -86,21 +86,21 @@ func TestPetStoreService(t *testing.T) {
 		store := newTestStore(t, server.URL)
 
 		// Set up expectations for different pets
-		handler.ExpectGetPetById(1).RespondJSON200(petstoretest.GetPetById200JSONResponse{
+		handler.ExpectGetPetById(1).RespondJSON200(oapi.Pet{
 			Id:     ptr(int32(1)),
 			Name:   "Marco",
 			Status: ptr(oapi.PetStatusSold),
 		})
 
-		handler.ExpectGetPetById(2).RespondJSON200(petstoretest.GetPetById200JSONResponse(oapi.Pet{
+		handler.ExpectGetPetById(2).RespondJSON200(oapi.Pet{
 			Id:   ptr(int32(2)),
 			Name: "Dolly",
 			Category: &oapi.Category{
 				Name: ptr("Puppy"),
 			},
-		}))
+		})
 
-		handler.ExpectGetPetById(3).RespondJSON404(petstoretest.GetPetById404JSONResponse{
+		handler.ExpectGetPetById(3).RespondJSON404(oapi.Error{
 			Message: ptr("Not found"),
 		})
 
@@ -124,7 +124,7 @@ func TestPetStoreService(t *testing.T) {
 		handler.ExpectUpdatePet(petstoretest.UpdatePetJSONRequestBody{
 			Id:     ptr(int32(1)),
 			Status: ptr(oapi.PetStatusSold),
-		}).RespondJSON200(petstoretest.UpdatePet200JSONResponse{
+		}).RespondJSON200(oapi.Pet{
 			Id:     ptr(int32(1)),
 			Name:   "Marco",
 			Status: ptr(oapi.PetStatusSold),

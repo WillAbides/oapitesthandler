@@ -285,11 +285,13 @@ type bodyData struct {
 }
 
 type responseTypeData struct {
-	TypeName    string
-	MethodName  string
-	StatusCode  string
-	ContentType string
-	IsEmpty     bool
+	TypeName       string
+	MethodName     string
+	StatusCode     string
+	ContentType    string
+	IsEmpty        bool
+	UnderlyingType string // For type aliases, this is the underlying type
+	IsAlias        bool   // True if this is a type alias
 }
 
 func parseResponseTypes(op codegen.OperationDefinition) []responseTypeData {
@@ -322,11 +324,32 @@ func parseResponseTypes(op codegen.OperationDefinition) []responseTypeData {
 			if nameTag == "" {
 				continue
 			}
+
+			// Check if this response type is a simple type alias.
+			// Responses are generated as structs (not simple aliases) when:
+			// - The response is a $ref to a component response (embedded struct)
+			// - The response has headers (struct with Body and Headers fields)
+			// - The schema has inline properties (struct with fields)
+			// Otherwise, it's a simple type alias (type FooResponse Bar).
+
+			isAlias := !respDef.IsRef() &&
+				len(respDef.Headers) == 0 &&
+				content.Schema.GoType != "" &&
+				!strings.Contains(content.Schema.GoType, "\n") &&
+				len(content.Schema.Properties) == 0
+
+			var underlyingType string
+			if isAlias {
+				underlyingType = content.Schema.GoType
+			}
+
 			responseTypes = append(responseTypes, responseTypeData{
-				TypeName:    op.OperationId + statusCode + nameTag + "Response",
-				MethodName:  "Respond" + nameTag + statusCode,
-				StatusCode:  statusCode,
-				ContentType: nameTag,
+				TypeName:       op.OperationId + statusCode + nameTag + "Response",
+				MethodName:     "Respond" + nameTag + statusCode,
+				StatusCode:     statusCode,
+				ContentType:    nameTag,
+				UnderlyingType: underlyingType,
+				IsAlias:        isAlias,
 			})
 		}
 	}
