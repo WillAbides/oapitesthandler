@@ -40,7 +40,7 @@ func Run(specPath, configPath, outputPath, modelsPkgPath string) error {
 
 	rawOpts, err := os.ReadFile(configPath)
 	if err != nil {
-		return fmt.Errorf("reading config file")
+		return fmt.Errorf("reading config file %q: %w", configPath, err)
 	}
 
 	var opts codegen.Configuration
@@ -88,12 +88,17 @@ func loadSpec(opts codegen.Configuration, specPath string) (*openapi3.T, error) 
 }
 
 func resolvePackage(pkgPath string) (*packages.Package, error) {
-	pkgs, err := packages.Load(&packages.Config{Mode: packages.LoadAllSyntax}, pkgPath)
+	pkgs, err := packages.Load(&packages.Config{
+		Mode: packages.NeedName | packages.NeedFiles | packages.NeedSyntax,
+	}, pkgPath)
 	if err != nil {
 		return nil, fmt.Errorf("loading models package: %w", err)
 	}
 	if len(pkgs) == 0 {
 		return nil, fmt.Errorf("no package found for models package: %s", pkgPath)
+	}
+	if len(pkgs) > 1 {
+		return nil, fmt.Errorf("multiple packages found for models package: %s", pkgPath)
 	}
 	pkg := pkgs[0]
 	if len(pkg.Errors) > 0 {
