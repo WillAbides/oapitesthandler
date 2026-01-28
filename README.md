@@ -18,13 +18,6 @@ Set `go:generate` directives near where you are already generating your oapi-cod
 
 ## Installation
 
-### With [bindown](https://github.com/WillAbides/bindown)
-
-```shell
-bindown template-source add oapitesthandler https://github.com/WillAbides/oapitesthandler/releases/latest/download/bindown.yaml
-bindown dependency add oapitesthandler --source oapitesthandler -y
-```
-
 ### With `go install`
 
 ```shell
@@ -35,6 +28,98 @@ go install github.com/willabides/oapitesthandler/cmd/oapitesthandler@latest
 
 ```shell
 go get -tool github.com/willabides/oapitesthandler/cmd/oapitesthandler
+```
+
+### With [bindown](https://github.com/WillAbides/bindown)
+
+```shell
+bindown template-source add oapitesthandler https://github.com/WillAbides/oapitesthandler/releases/latest/download/bindown.yaml
+bindown dependency add oapitesthandler --source oapitesthandler -y
+```
+
+## Usage
+
+The generated TestHandler provides a type-safe way to mock API endpoints in your tests.
+
+### Basic Pattern
+
+```go
+func TestMyService(t *testing.T) {
+    // Create the test handler
+    handler := petstoretest.NewTestHandler(t)
+    server := httptest.NewServer(handler)
+    defer server.Close()
+
+    // Create your service that uses an oapi-codegen client
+    client, err := oapi.NewClientWithResponses(server.URL)
+    require.NoError(t, err)
+	
+    petstoreService := NewPetstoreService(client)
+
+    // Set expectations
+    handler.ExpectGetPetById(1).RespondJSON200(petstoretest.GetPetById200JSONResponse{
+        Id:   1,
+        Name: "Fluffy",
+    })
+
+    // Call your service - it hits the mock server
+    pet, err := petstoreService.GetPetByID(t.Context(), 1)
+    require.NoError(t, err)
+    require.Equal(t, "Fluffy", pet.Name)
+
+    // Test automatically verifies all expectations were met
+}
+```
+
+### Setting Expectations
+
+Each API operation gets an `Expect{OperationName}` method that returns a builder. Chain a `Respond` method to set the
+response:
+
+```go
+// Different response codes
+handler.ExpectGetPetById(1).RespondJSON200(successResponse)
+handler.ExpectGetPetById(999).RespondJSON404(notFoundResponse)
+
+// Operations with request bodies
+handler.ExpectUpdatePet(updateRequest).RespondJSON200(updatedPet)
+
+// Operations with query parameters
+handler.ExpectFindPetsByStatus(queryParams).RespondJSON200(pets)
+```
+
+### Controlling Call Counts
+
+Use `Times()` to expect multiple calls with the same parameters:
+
+```go
+// Expect exactly 3 calls
+handler.ExpectGetPetById(1, petstoretest.Times(3)).RespondJSON200(response)
+```
+
+Use `MinTimes()` when you want at least N calls:
+
+```go
+// Expect at least 2 calls, but allow more
+handler.ExpectGetPetById(1, petstoretest.MinTimes(2)).RespondJSON200(response)
+
+// MinTimes(0) acts as a stub - accepts any number of calls including zero
+handler.ExpectGetPetById(1, petstoretest.MinTimes(0)).RespondJSON200(response)
+```
+
+### Custom Responses
+
+Use `Handle()` for responses that aren't described in your OpenAPI spec:
+
+```go
+handler.ExpectGetPetById(1).Handle(func(req petstoretest.GetPetByIdRequestObject, w http.ResponseWriter) error {
+    w.Header().Set("X-Custom-Header", "value")
+    w.WriteHeader(200)
+    return json.NewEncoder(w).Encode(map[string]any{
+        "id":   req.PetId,
+        "name": fmt.Sprintf("Pet-%d", req.PetId),
+    })
+})
 ```
 
 ## CLI Usage
