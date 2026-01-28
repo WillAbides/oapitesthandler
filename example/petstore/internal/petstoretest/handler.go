@@ -8,6 +8,7 @@ import (
 	"net/http"
 
 	externalRef0 "github.com/willabides/oapitesthandler/example/petstore/internal/common/oapi"
+	modelspkg "github.com/willabides/oapitesthandler/example/petstore/internal/oapi"
 )
 
 type TestHandler struct {
@@ -67,7 +68,7 @@ func (r addPetRawResponder) VisitAddPetResponse(w http.ResponseWriter) error {
 }
 
 // RespondJSON201 sets the expectation to return a 201 response with JSON content.
-func (b *AddPetExpectation) RespondJSON201(resp Pet) {
+func (b *AddPetExpectation) RespondJSON201(resp modelspkg.Pet) {
 	typedResp := AddPet201JSONResponse(resp)
 	b.handler.addPetExpectResponses.expect(b.handler.tb, b.req, b.rawBody, typedResp, b.opts...)
 }
@@ -107,7 +108,7 @@ func (r updatePetRawResponder) VisitUpdatePetResponse(w http.ResponseWriter) err
 }
 
 // RespondJSON200 sets the expectation to return a 200 response with JSON content.
-func (b *UpdatePetExpectation) RespondJSON200(resp Pet) {
+func (b *UpdatePetExpectation) RespondJSON200(resp modelspkg.Pet) {
 	typedResp := UpdatePet200JSONResponse(resp)
 	b.handler.updatePetExpectResponses.expect(b.handler.tb, b.req, b.rawBody, typedResp, b.opts...)
 }
@@ -119,13 +120,13 @@ func (b *UpdatePetExpectation) RespondJSON400(resp UpdatePet400JSONResponse) {
 }
 
 // RespondJSON404 sets the expectation to return a 404 response with JSON content.
-func (b *UpdatePetExpectation) RespondJSON404(resp Error) {
+func (b *UpdatePetExpectation) RespondJSON404(resp modelspkg.Error) {
 	typedResp := UpdatePet404JSONResponse(resp)
 	b.handler.updatePetExpectResponses.expect(b.handler.tb, b.req, b.rawBody, typedResp, b.opts...)
 }
 
 // RespondJSON422 sets the expectation to return a 422 response with JSON content.
-func (b *UpdatePetExpectation) RespondJSON422(resp Error) {
+func (b *UpdatePetExpectation) RespondJSON422(resp modelspkg.Error) {
 	typedResp := UpdatePet422JSONResponse(resp)
 	b.handler.updatePetExpectResponses.expect(b.handler.tb, b.req, b.rawBody, typedResp, b.opts...)
 }
@@ -152,7 +153,7 @@ func (r findPetsByStatusRawResponder) VisitFindPetsByStatusResponse(w http.Respo
 }
 
 // RespondJSON200 sets the expectation to return a 200 response with JSON content.
-func (b *FindPetsByStatusExpectation) RespondJSON200(resp []Pet) {
+func (b *FindPetsByStatusExpectation) RespondJSON200(resp []modelspkg.Pet) {
 	typedResp := FindPetsByStatus200JSONResponse(resp)
 	b.handler.findPetsByStatusExpectResponses.expect(b.handler.tb, b.req, nil, typedResp, b.opts...)
 }
@@ -185,7 +186,7 @@ func (r findPetsByTagsRawResponder) VisitFindPetsByTagsResponse(w http.ResponseW
 }
 
 // RespondJSON200 sets the expectation to return a 200 response with JSON content.
-func (b *FindPetsByTagsExpectation) RespondJSON200(resp []Pet) {
+func (b *FindPetsByTagsExpectation) RespondJSON200(resp []modelspkg.Pet) {
 	typedResp := FindPetsByTags200JSONResponse(resp)
 	b.handler.findPetsByTagsExpectResponses.expect(b.handler.tb, b.req, nil, typedResp, b.opts...)
 }
@@ -263,13 +264,13 @@ func (r getPetByIdRawResponder) VisitGetPetByIdResponse(w http.ResponseWriter) e
 }
 
 // RespondJSON200 sets the expectation to return a 200 response with JSON content.
-func (b *GetPetByIdExpectation) RespondJSON200(resp Pet) {
+func (b *GetPetByIdExpectation) RespondJSON200(resp modelspkg.Pet) {
 	typedResp := GetPetById200JSONResponse(resp)
 	b.handler.getPetByIdExpectResponses.expect(b.handler.tb, b.req, nil, typedResp, b.opts...)
 }
 
 // RespondApplicationVndPetstorePlusJSON200 sets the expectation to return a 200 response with ApplicationVndPetstorePlusJSON content.
-func (b *GetPetByIdExpectation) RespondApplicationVndPetstorePlusJSON200(resp Pet) {
+func (b *GetPetByIdExpectation) RespondApplicationVndPetstorePlusJSON200(resp modelspkg.Pet) {
 	typedResp := GetPetById200ApplicationVndPetstorePlusJSONResponse(resp)
 	b.handler.getPetByIdExpectResponses.expect(b.handler.tb, b.req, nil, typedResp, b.opts...)
 }
@@ -281,7 +282,7 @@ func (b *GetPetByIdExpectation) RespondJSON400(resp GetPetById400JSONResponse) {
 }
 
 // RespondJSON404 sets the expectation to return a 404 response with JSON content.
-func (b *GetPetByIdExpectation) RespondJSON404(resp Error) {
+func (b *GetPetByIdExpectation) RespondJSON404(resp modelspkg.Error) {
 	typedResp := GetPetById404JSONResponse(resp)
 	b.handler.getPetByIdExpectResponses.expect(b.handler.tb, b.req, nil, typedResp, b.opts...)
 }
@@ -308,7 +309,7 @@ func (r updatePetWithFormRawResponder) VisitUpdatePetWithFormResponse(w http.Res
 }
 
 // RespondJSON200 sets the expectation to return a 200 response with JSON content.
-func (b *UpdatePetWithFormExpectation) RespondJSON200(resp Pet) {
+func (b *UpdatePetWithFormExpectation) RespondJSON200(resp modelspkg.Pet) {
 	typedResp := UpdatePetWithForm200JSONResponse(resp)
 	b.handler.updatePetWithFormExpectResponses.expect(b.handler.tb, b.req, nil, typedResp, b.opts...)
 }
@@ -380,7 +381,7 @@ func (r getPetPhotoByIdRawResponder) VisitGetPetPhotoByIdResponse(w http.Respons
 }
 
 // RespondJSON200 sets the expectation to return a 200 response with JSON content.
-func (b *GetPetPhotoByIdExpectation) RespondJSON200(resp PetPhoto) {
+func (b *GetPetPhotoByIdExpectation) RespondJSON200(resp modelspkg.PetPhoto) {
 	typedResp := GetPetPhotoById200JSONResponse(resp)
 	b.handler.getPetPhotoByIdExpectResponses.expect(b.handler.tb, b.req, nil, typedResp, b.opts...)
 }
@@ -413,13 +414,13 @@ func (r getPetRegistrationRawResponder) VisitGetPetRegistrationResponse(w http.R
 }
 
 // RespondJSON200 sets the expectation to return a 200 response with JSON content.
-func (b *GetPetRegistrationExpectation) RespondJSON200(resp PetWithCustomTypes) {
+func (b *GetPetRegistrationExpectation) RespondJSON200(resp modelspkg.PetWithCustomTypes) {
 	typedResp := GetPetRegistration200JSONResponse(resp)
 	b.handler.getPetRegistrationExpectResponses.expect(b.handler.tb, b.req, nil, typedResp, b.opts...)
 }
 
 // RespondJSON404 sets the expectation to return a 404 response with JSON content.
-func (b *GetPetRegistrationExpectation) RespondJSON404(resp Error) {
+func (b *GetPetRegistrationExpectation) RespondJSON404(resp modelspkg.Error) {
 	typedResp := GetPetRegistration404JSONResponse(resp)
 	b.handler.getPetRegistrationExpectResponses.expect(b.handler.tb, b.req, nil, typedResp, b.opts...)
 }
@@ -447,7 +448,7 @@ func (r uploadFileRawResponder) VisitUploadFileResponse(w http.ResponseWriter) e
 }
 
 // RespondJSON200 sets the expectation to return a 200 response with JSON content.
-func (b *UploadFileExpectation) RespondJSON200(resp ApiResponse) {
+func (b *UploadFileExpectation) RespondJSON200(resp modelspkg.ApiResponse) {
 	typedResp := UploadFile200JSONResponse(resp)
 	b.handler.uploadFileExpectResponses.expect(b.handler.tb, b.req, b.rawBody, typedResp, b.opts...)
 }
@@ -514,7 +515,7 @@ func (r postStoreOrderRawResponder) VisitPostStoreOrderResponse(w http.ResponseW
 }
 
 // RespondJSON200 sets the expectation to return a 200 response with JSON content.
-func (b *PostStoreOrderExpectation) RespondJSON200(resp Order) {
+func (b *PostStoreOrderExpectation) RespondJSON200(resp modelspkg.Order) {
 	typedResp := PostStoreOrder200JSONResponse(resp)
 	b.handler.postStoreOrderExpectResponses.expect(b.handler.tb, b.req, b.rawBody, typedResp, b.opts...)
 }
@@ -592,7 +593,7 @@ func (r getOrderByIdRawResponder) VisitGetOrderByIdResponse(w http.ResponseWrite
 }
 
 // RespondJSON200 sets the expectation to return a 200 response with JSON content.
-func (b *GetOrderByIdExpectation) RespondJSON200(resp Order) {
+func (b *GetOrderByIdExpectation) RespondJSON200(resp modelspkg.Order) {
 	typedResp := GetOrderById200JSONResponse(resp)
 	b.handler.getOrderByIdExpectResponses.expect(b.handler.tb, b.req, nil, typedResp, b.opts...)
 }

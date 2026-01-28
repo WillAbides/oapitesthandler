@@ -5,10 +5,7 @@ import (
 	"embed"
 	"errors"
 	"fmt"
-	"go/ast"
-	"go/parser"
-	"go/printer"
-	"go/token"
+	"io/fs"
 	"os"
 	"path"
 	"path/filepath"
@@ -18,8 +15,6 @@ import (
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/oapi-codegen/oapi-codegen/v2/pkg/codegen"
 	"github.com/oapi-codegen/oapi-codegen/v2/pkg/util"
-	"golang.org/x/tools/go/ast/astutil"
-	"golang.org/x/tools/go/ast/inspector"
 	"golang.org/x/tools/go/packages"
 	"golang.org/x/tools/imports"
 	"gopkg.in/yaml.v3"
@@ -34,7 +29,15 @@ var templatesFS embed.FS
 
 var templates = template.Must(template.ParseFS(templatesFS, "templates/*.tmpl"))
 
-func Run(specPath, configPath, outputPath, modelsPkg string) error {
+func Run(specPath, configPath, outputPath, modelsPkgPath string) error {
+	if modelsPkgPath != "" {
+		pkg, err := resolvePackage(modelsPkgPath)
+		if err != nil {
+			return fmt.Errorf("resolving models package: %w", err)
+		}
+		modelsPkgPath = pkg.PkgPath
+	}
+
 	rawOpts, err := os.ReadFile(configPath)
 	if err != nil {
 		return fmt.Errorf("reading config file")
@@ -47,22 +50,21 @@ func Run(specPath, configPath, outputPath, modelsPkg string) error {
 	}
 	opts.PackageName = detectPackageName(outputPath)
 
+	if len(opts.OutputOptions.UserTemplates) > 0 {
+		return fmt.Errorf("cowardly refusing to run with user templates configured")
+	}
+
 	spec, err := loadSpec(opts, specPath)
 	if err != nil {
 		return err
 	}
 
-	err = generateModels(spec, opts, outputPath, modelsPkg)
-	if err != nil {
-		return fmt.Errorf("generating models code: %w", err)
-	}
-
-	err = generateServer(spec, opts, outputPath)
+	err = generateServer(spec, opts, outputPath, modelsPkgPath)
 	if err != nil {
 		return fmt.Errorf("generating server code: %w", err)
 	}
 
-	err = generateTestHandler(spec, opts, outputPath)
+	err = generateTestHandler(spec, opts, outputPath, modelsPkgPath)
 	if err != nil {
 		return fmt.Errorf("generating test handler: %w", err)
 	}
@@ -111,122 +113,54 @@ func detectPackageName(outDir string) string {
 	return filepath.Base(abs)
 }
 
-func generateModels(spec *openapi3.T, opts codegen.Configuration, outDir, modelsPkg string) (errOut error) {
-	opts.Generate = codegen.GenerateOptions{
-		Models: true,
-	}
-
-	generated, err := codegen.Generate(spec, opts)
+func oapiCodegenTemplate(filename string) string {
+	content, err := fs.ReadFile(templatesFS, path.Join("templates/oapi-codegen", filename))
 	if err != nil {
-		return fmt.Errorf("generating server code: %w", err)
+		panic(fmt.Sprintf("reading template file %s: %v", filename, err))
 	}
-
-	if modelsPkg != "" {
-		generated, err = aliasModels(modelsPkg, generated)
-		if err != nil {
-			return err
-		}
-	}
-
-	return writeFile(filepath.Join(outDir, "oapi_models_gen.go"), []byte(generated))
+	return string(content)
 }
 
-func getModelExports(modelsPkg *packages.Package) (map[string]bool, error) {
-	modelExports := map[string]bool{}
-
-	inspector.New(modelsPkg.Syntax).Nodes([]ast.Node{&ast.TypeSpec{}, &ast.ValueSpec{}}, func(
-		n ast.Node,
-		_ bool,
-	) (proceed bool) {
-		switch spec := n.(type) {
-		case *ast.TypeSpec:
-			if spec.Name.IsExported() {
-				modelExports[spec.Name.Name] = true
-			}
-		case *ast.ValueSpec:
-			for _, name := range spec.Names {
-				if name.IsExported() {
-					modelExports[name.Name] = true
-				}
-			}
-		}
-		return false
-	})
-
-	return modelExports, nil
-}
-
-func aliasModels(modelsPkgPath, generated string) (string, error) {
-	modelsPkg, err := resolvePackage(modelsPkgPath)
+func generateServer(spec *openapi3.T, opts codegen.Configuration, outDir, modelsPkgPath string) (errOut error) {
+	opts.Generate = codegen.GenerateOptions{Models: true}
+	outFile := filepath.Join(outDir, "oapi_models_gen.go")
+	err := generateOapiCodegen(spec, opts, outFile, modelsPkgPath)
 	if err != nil {
-		return "", fmt.Errorf("resolving models package: %w", err)
+		return fmt.Errorf("generating oapi-codegen models: %w", err)
 	}
 
-	modelExports, err := getModelExports(modelsPkg)
-	if err != nil {
-		return "", fmt.Errorf("getting model exports: %w", err)
-	}
-
-	fset := token.NewFileSet()
-	file, err := parser.ParseFile(fset, "", generated, 0)
-	if err != nil {
-		return "", fmt.Errorf("parsing generated code: %w", err)
-	}
-
-	astutil.AddNamedImport(fset, file, "clientpkg", modelsPkg.PkgPath)
-
-	replaceWithClientPkgRefs(file, modelExports)
-
-	var buf bytes.Buffer
-	err = printer.Fprint(&buf, fset, file)
-	if err != nil {
-		return "", fmt.Errorf("printing modified code: %w", err)
-	}
-
-	return buf.String(), nil
-}
-
-func replaceWithClientPkgRefs(file *ast.File, modelExports map[string]bool) {
-	inspector.New([]*ast.File{file}).Nodes(
-		[]ast.Node{&ast.TypeSpec{}, &ast.ValueSpec{}},
-		func(n ast.Node, _ bool) bool {
-			switch spec := n.(type) {
-			case *ast.TypeSpec:
-				if modelExports[spec.Name.Name] {
-					spec.Assign = token.Pos(1) // Mark as type alias
-					spec.Type = &ast.SelectorExpr{
-						X:   &ast.Ident{Name: "clientpkg"},
-						Sel: &ast.Ident{Name: spec.Name.Name},
-					}
-				}
-			case *ast.ValueSpec:
-				spec.Type = nil // Let type be inferred
-				for i, name := range spec.Names {
-					if modelExports[name.Name] && i < len(spec.Values) {
-						spec.Values[i] = &ast.SelectorExpr{
-							X:   &ast.Ident{Name: "clientpkg"},
-							Sel: &ast.Ident{Name: name.Name},
-						}
-					}
-				}
-			}
-			return false
-		},
-	)
-}
-
-func generateServer(spec *openapi3.T, opts codegen.Configuration, outDir string) (errOut error) {
 	opts.Generate = codegen.GenerateOptions{
 		StdHTTPServer: true,
 		Strict:        true,
 	}
+	outFile = filepath.Join(outDir, "oapi_server_gen.go")
+	err = generateOapiCodegen(spec, opts, outFile, modelsPkgPath)
+	if err != nil {
+		return fmt.Errorf("generating oapi-codegen server: %w", err)
+	}
+
+	return nil
+}
+
+func generateOapiCodegen(spec *openapi3.T, opts codegen.Configuration, outFile, modelsPkgPath string) (errOut error) {
+	if modelsPkgPath != "" {
+		opts.OutputOptions.UserTemplates = map[string]string{
+			"typedef.tmpl":     oapiCodegenTemplate("typedef.tmpl"),
+			"param-types.tmpl": oapiCodegenTemplate("param-types.tmpl"),
+			"constants.tmpl":   oapiCodegenTemplate("constants.tmpl"),
+		}
+		opts.AdditionalImports = append(opts.AdditionalImports, codegen.AdditionalImport{
+			Alias:   "modelspkg",
+			Package: modelsPkgPath,
+		})
+	}
 
 	generated, err := codegen.Generate(spec, opts)
 	if err != nil {
 		return fmt.Errorf("generating server code: %w", err)
 	}
 
-	out, err := os.Create(filepath.Join(outDir, "oapi_gen.go"))
+	out, err := os.Create(outFile)
 	if err != nil {
 		return fmt.Errorf("creating output file: %w", err)
 	}
@@ -242,7 +176,7 @@ func generateServer(spec *openapi3.T, opts codegen.Configuration, outDir string)
 	return nil
 }
 
-func generateTestHandler(spec *openapi3.T, opts codegen.Configuration, outDir string) error {
+func generateTestHandler(spec *openapi3.T, opts codegen.Configuration, outDir, modelsPkgPath string) error {
 	operations, err := codegen.OperationDefinitions(spec, opts.OutputOptions.InitialismOverrides)
 	if err != nil {
 		return fmt.Errorf("getting operation definitions: %w", err)
@@ -253,7 +187,7 @@ func generateTestHandler(spec *openapi3.T, opts codegen.Configuration, outDir st
 		return fmt.Errorf("writing helpers.go: %w", err)
 	}
 
-	handlerCode, err := buildTestHandler(operations, opts.PackageName)
+	handlerCode, err := buildTestHandler(operations, opts.PackageName, modelsPkgPath)
 	if err != nil {
 		return fmt.Errorf("building test handler: %w", err)
 	}
@@ -294,7 +228,7 @@ type responseTypeData struct {
 	IsAlias        bool   // True if this is a type alias
 }
 
-func parseResponseTypes(op codegen.OperationDefinition) []responseTypeData {
+func parseResponseTypes(op codegen.OperationDefinition, modelsPkgPath string) []responseTypeData {
 	var responseTypes []responseTypeData
 
 	for _, respDef := range op.Responses {
@@ -341,6 +275,10 @@ func parseResponseTypes(op codegen.OperationDefinition) []responseTypeData {
 			var underlyingType string
 			if isAlias {
 				underlyingType = content.Schema.GoType
+				// When models package is set, qualify the type with modelspkg.
+				if modelsPkgPath != "" {
+					underlyingType = qualifyType(underlyingType)
+				}
 			}
 
 			responseTypes = append(responseTypes, responseTypeData{
@@ -355,6 +293,60 @@ func parseResponseTypes(op codegen.OperationDefinition) []responseTypeData {
 	}
 
 	return responseTypes
+}
+
+// qualifyType adds the modelspkg. prefix to type names in a Go type expression.
+// It handles simple types (e.g., Pet -> modelspkg.Pet) and compound types
+// (e.g., []Pet -> []modelspkg.Pet, map[string]Pet -> map[string]modelspkg.Pet).
+func qualifyType(goType string) string {
+	// If the type starts with lowercase (built-in types, unexported types), don't qualify it
+	if goType != "" && goType[0] >= 'a' && goType[0] <= 'z' {
+		return goType
+	}
+
+	// If it already has a package qualifier, don't modify it
+	if strings.Contains(goType, ".") {
+		return goType
+	}
+
+	// Handle slice types: []Type -> []modelspkg.Type
+	if strings.HasPrefix(goType, "[]") {
+		elemType := goType[2:]
+		return "[]" + qualifyType(elemType)
+	}
+
+	// Handle map types: map[K]V -> map[K]modelspkg.V
+	if strings.HasPrefix(goType, "map[") {
+		// Find the closing bracket for the key type
+		depth := 0
+		keyEnd := -1
+		for i, c := range goType {
+			if c == '[' {
+				depth++
+			}
+			if c == ']' {
+				depth--
+				if depth == 0 {
+					keyEnd = i
+					break
+				}
+			}
+		}
+		if keyEnd > 0 && keyEnd < len(goType)-1 {
+			keyPart := goType[4:keyEnd]    // map[key
+			valuePart := goType[keyEnd+1:] // ]value
+			return "map[" + qualifyType(keyPart) + "]" + qualifyType(valuePart)
+		}
+	}
+
+	// Handle pointer types: *Type -> *modelspkg.Type
+	if strings.HasPrefix(goType, "*") {
+		elemType := goType[1:]
+		return "*" + qualifyType(elemType)
+	}
+
+	// Simple identifier - add modelspkg. prefix
+	return "modelspkg." + goType
 }
 
 func isIntegerStatusCode(statusCode string) bool {
@@ -416,7 +408,7 @@ type operationData struct {
 	ResponseTypes        []responseTypeData
 }
 
-func buildTestHandler(operations []codegen.OperationDefinition, packageName string) (string, error) {
+func buildTestHandler(operations []codegen.OperationDefinition, packageName, modelsPkgPath string) (string, error) {
 	var ops []operationData
 	for i := range operations {
 		op := operations[i]
@@ -453,7 +445,7 @@ func buildTestHandler(operations []codegen.OperationDefinition, packageName stri
 			QueryParamsType:      queryParamsType,
 			Bodies:               bodies,
 			BuilderTypeName:      op.OperationId + "Expectation",
-			ResponseTypes:        parseResponseTypes(op),
+			ResponseTypes:        parseResponseTypes(op, modelsPkgPath),
 		})
 	}
 
@@ -461,6 +453,7 @@ func buildTestHandler(operations []codegen.OperationDefinition, packageName stri
 	err := templates.ExecuteTemplate(&buf, "handler.tmpl", map[string]any{
 		"PackageName": packageName,
 		"Operations":  ops,
+		"ModelsPkg":   modelsPkgPath,
 	})
 	if err != nil {
 		return "", fmt.Errorf("executing template: %w", err)

@@ -4,6 +4,10 @@ import (
 	"bytes"
 	"io"
 	"net/http"
+
+   {{if .ModelsPkg }}
+    modelspkg "{{.ModelsPkg}}"
+   {{end}}
 )
 
 type TestHandler struct {
