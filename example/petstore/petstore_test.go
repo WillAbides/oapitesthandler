@@ -1,7 +1,6 @@
 package petstore
 
 import (
-	"context"
 	"net/http/httptest"
 	"testing"
 
@@ -12,8 +11,6 @@ import (
 
 // Example tests demonstrating how to use TestHandler to test a service that uses an oapi-codegen client.
 // The TestHandler acts as a mock HTTP server, allowing you to set expectations and verify behavior.
-//
-// For comprehensive tests of the generated code itself, see metatest/metatest_test.go.
 func TestPetStoreService(t *testing.T) {
 	t.Run("successful request", func(t *testing.T) {
 		// Create TestHandler which acts as mock HTTP server
@@ -34,7 +31,7 @@ func TestPetStoreService(t *testing.T) {
 		})
 
 		// Call the service method - it will make HTTP request to our mock server
-		got, found, err := store.getPetByID(context.Background(), 1)
+		got, found, err := store.getPetByID(t.Context(), 1)
 		require.NoError(t, err)
 		require.True(t, found)
 		require.Equal(t, &pet{
@@ -55,7 +52,7 @@ func TestPetStoreService(t *testing.T) {
 			Message: ptr("Pet not found"),
 		})
 
-		got, found, err := store.getPetByID(context.Background(), 999)
+		got, found, err := store.getPetByID(t.Context(), 999)
 		require.NoError(t, err)
 		require.False(t, found)
 		require.Nil(t, got)
@@ -74,7 +71,7 @@ func TestPetStoreService(t *testing.T) {
 			},
 		})
 
-		got, found, err := store.getPetByID(context.Background(), 3)
+		got, found, err := store.getPetByID(t.Context(), 3)
 		require.Error(t, err)
 		require.Contains(t, err.Error(), "unexpected status code: 400")
 		require.False(t, found)
@@ -108,7 +105,7 @@ func TestPetStoreService(t *testing.T) {
 		})
 
 		// Call method that makes multiple requests
-		got, err := store.getPetsByIDs(context.Background(), 1, 2, 3)
+		got, err := store.getPetsByIDs(t.Context(), 1, 2, 3)
 		require.NoError(t, err)
 		require.Len(t, got, 2) // Only 2 pets found (3 returned 404)
 		require.Equal(t, int64(1), got[0].ID)
@@ -133,7 +130,7 @@ func TestPetStoreService(t *testing.T) {
 			Status: ptr(petstoretest.PetStatusSold),
 		})
 
-		err := store.updatePetStatus(context.Background(), 1, petStatusSold)
+		err := store.updatePetStatus(t.Context(), 1, petStatusSold)
 		require.NoError(t, err)
 	})
 }
