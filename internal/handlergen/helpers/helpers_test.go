@@ -211,7 +211,7 @@ func TestExpectations(t *testing.T) {
 
 		exp.expect(tb, req, nil, resp, Times(3))
 
-		for i := 0; i < 3; i++ {
+		for i := range 3 {
 			got, err := exp.getResponse(tb, req, nil)
 			require.NoError(t, err, "call %d", i+1)
 			assert.Equal(t, resp.Status, got.Status, "call %d", i+1)
@@ -231,7 +231,7 @@ func TestExpectations(t *testing.T) {
 		exp.expect(tb, req, nil, resp, Times(2))
 
 		// Call twice successfully
-		for i := 0; i < 2; i++ {
+		for i := range 2 {
 			_, err := exp.getResponse(tb, req, nil)
 			require.NoError(t, err, "call %d", i+1)
 		}
@@ -306,15 +306,121 @@ func TestExpectations(t *testing.T) {
 		exp.expect(tb, req, nil, resp, Times(100))
 
 		var wg sync.WaitGroup
-		for i := 0; i < 100; i++ {
-			wg.Add(1)
-			go func() {
-				defer wg.Done()
+		for range 100 {
+			wg.Go(func() {
 				_, err := exp.getResponse(tb, req, nil)
 				assert.NoError(t, err)
-			}()
+			})
 		}
 		wg.Wait()
+
+		tb.RunCleanups()
+		tb.AssertNoErrors()
+	})
+
+	t.Run("with rawRequestBody - same body bytes produce same hash", func(t *testing.T) {
+		req := testRequest{ID: 1, Name: "test"}
+		bodyBytes := []byte(`{"field": "value"}`)
+
+		hash1 := keyHash(req, bodyBytes)
+		hash2 := keyHash(req, bodyBytes)
+
+		assert.Equal(t, hash1, hash2, "expected same hash for same raw body bytes")
+	})
+
+	t.Run("with rawRequestBody - different body bytes produce different hashes", func(t *testing.T) {
+		req := testRequest{ID: 1, Name: "test"}
+		bodyBytes1 := []byte(`{"field": "value1"}`)
+		bodyBytes2 := []byte(`{"field": "value2"}`)
+
+		hash1 := keyHash(req, bodyBytes1)
+		hash2 := keyHash(req, bodyBytes2)
+
+		assert.NotEqual(t, hash1, hash2, "expected different hashes for different raw body bytes")
+	})
+
+	t.Run("with rawRequestBody - expect and get", func(t *testing.T) {
+		tb := testutil.NewTB(t)
+		exp := &expectResponses[testRequest, testResponse]{}
+
+		req := testRequest{ID: 1, Name: "test", Body: strings.NewReader("body content")}
+		resp := testResponse{Status: 200, Message: "ok"}
+		bodyBytes := []byte(`{"field": "value"}`)
+
+		// Set expectation with raw body bytes
+		exp.expect(tb, req, strings.NewReader(string(bodyBytes)), resp)
+
+		// Get response with same raw body bytes
+		got, err := exp.getResponse(tb, req, strings.NewReader(string(bodyBytes)))
+		require.NoError(t, err)
+		assert.Equal(t, resp.Status, got.Status)
+		assert.Equal(t, resp.Message, got.Message)
+
+		tb.RunCleanups()
+		tb.AssertNoErrors()
+	})
+
+	t.Run("with rawRequestBody - mismatched body bytes", func(t *testing.T) {
+		tb := testutil.NewTB(t)
+		exp := &expectResponses[testRequest, testResponse]{}
+
+		req := testRequest{ID: 1, Name: "test"}
+		resp := testResponse{Status: 200, Message: "ok"}
+		bodyBytes1 := []byte(`{"field": "value1"}`)
+		bodyBytes2 := []byte(`{"field": "value2"}`)
+
+		// Set expectation with one body
+		exp.expect(tb, req, strings.NewReader(string(bodyBytes1)), resp)
+
+		// Try to get with different body - should fail
+		_, err := exp.getResponse(tb, req, strings.NewReader(string(bodyBytes2)))
+		assert.Error(t, err, "expected error when raw body bytes don't match")
+		tb.AssertErrors()
+	})
+
+	t.Run("with rawRequestBody - FIFO matching with different bodies", func(t *testing.T) {
+		tb := testutil.NewTB(t)
+		exp := &expectResponses[testRequest, testResponse]{}
+
+		req := testRequest{ID: 1, Name: "test"}
+		bodyBytes1 := []byte(`{"field": "value1"}`)
+		bodyBytes2 := []byte(`{"field": "value2"}`)
+		resp1 := testResponse{Status: 200, Message: "first"}
+		resp2 := testResponse{Status: 201, Message: "second"}
+
+		// Set expectations for different body bytes
+		exp.expect(tb, req, strings.NewReader(string(bodyBytes1)), resp1)
+		exp.expect(tb, req, strings.NewReader(string(bodyBytes2)), resp2)
+
+		// Get with first body
+		got1, err := exp.getResponse(tb, req, strings.NewReader(string(bodyBytes1)))
+		require.NoError(t, err)
+		assert.Equal(t, "first", got1.Message)
+
+		// Get with second body
+		got2, err := exp.getResponse(tb, req, strings.NewReader(string(bodyBytes2)))
+		require.NoError(t, err)
+		assert.Equal(t, "second", got2.Message)
+
+		tb.RunCleanups()
+		tb.AssertNoErrors()
+	})
+
+	t.Run("with rawRequestBody - Times option", func(t *testing.T) {
+		tb := testutil.NewTB(t)
+		exp := &expectResponses[testRequest, testResponse]{}
+
+		req := testRequest{ID: 1, Name: "test"}
+		bodyBytes := []byte(`{"field": "value"}`)
+		resp := testResponse{Status: 200, Message: "ok"}
+
+		exp.expect(tb, req, strings.NewReader(string(bodyBytes)), resp, Times(3))
+
+		for i := range 3 {
+			got, err := exp.getResponse(tb, req, strings.NewReader(string(bodyBytes)))
+			require.NoError(t, err, "call %d", i+1)
+			assert.Equal(t, resp.Status, got.Status, "call %d", i+1)
+		}
 
 		tb.RunCleanups()
 		tb.AssertNoErrors()

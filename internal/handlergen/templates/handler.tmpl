@@ -48,6 +48,15 @@ type {{.BuilderTypeName}} struct {
 	opts    []ExpectOption
 }
 
+type {{.LowercaseOperationID}}RawResponder struct {
+	req {{.RequestType}}
+	fn  func({{.RequestType}}, http.ResponseWriter) error
+}
+
+func (r {{.LowercaseOperationID}}RawResponder) Visit{{.OperationID}}Response(w http.ResponseWriter) error {
+	return r.fn(r.req, w)
+}
+
 {{range .ResponseTypes -}}
 // {{.MethodName}} sets the expectation to return a {{.StatusCode}} response{{if .ContentType}} with {{.ContentType}} content{{end}}.
 func (b *{{$op.BuilderTypeName}}) {{.MethodName}}({{if not .IsEmpty}}resp {{.TypeName}}{{end}}) {
@@ -70,6 +79,16 @@ func (b *{{.BuilderTypeName}}) RespondWithError(err error) {
 	b.handler.{{.ExpectationField}}.expect(b.handler.tb, b.req, b.rawBody, zeroResp, append(b.opts, WithError(err))...)
 	{{else -}}
 	b.handler.{{.ExpectationField}}.expect(b.handler.tb, b.req, nil, zeroResp, append(b.opts, WithError(err))...)
+	{{end -}}
+}
+
+// Handle sets the expectation to invoke a custom handler function with full control over the HTTP response.
+func (b *{{.BuilderTypeName}}) Handle(fn func({{.RequestType}}, http.ResponseWriter) error) {
+	resp := {{.LowercaseOperationID}}RawResponder{req: b.req, fn: fn}
+	{{if .HasGenericBody -}}
+	b.handler.{{.ExpectationField}}.expect(b.handler.tb, b.req, b.rawBody, resp, b.opts...)
+	{{else -}}
+	b.handler.{{.ExpectationField}}.expect(b.handler.tb, b.req, nil, resp, b.opts...)
 	{{end -}}
 }
 

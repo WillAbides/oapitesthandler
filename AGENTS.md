@@ -37,6 +37,7 @@ API calls in your tests.
 - The generate script runs `go generate ./...` which triggers:
     - oapi-codegen to generate client/server code from OpenAPI specs
     - oapitesthandler to generate test handler code
+- **IMPORTANT**: Always run `./script/generate` after updating AGENTS.md to verify that the documentation accurately reflects the current code generation behavior
 
 ### Building
 
@@ -126,6 +127,15 @@ builder.Respond200()               // No parameter - response has no content
 
 // Error responses
 builder.RespondWithError(err)      // Returns HTTP 500
+
+// Custom handler with full HTTP control
+builder.Handle(func(req RequestObject, w http.ResponseWriter) error {
+    // Full control over HTTP response
+    w.Header().Set("Content-Type", "application/json")
+    w.WriteHeader(200)
+    json.NewEncoder(w).Encode(dynamicResponse)
+    return nil
+})
 ```
 
 The method naming uses oapi-codegen's `Suffix()` method:
@@ -180,6 +190,17 @@ handler.ExpectGetPetById(999).Respond404()
 
 // Return an error (HTTP 500)
 handler.ExpectGetPetById(1).RespondWithError(errors.New("internal server error"))
+
+// Custom handler with dynamic responses
+handler.ExpectGetPetById(1).Handle(func(req GetPetByIdRequestObject, w http.ResponseWriter) error {
+    w.Header().Set("Content-Type", "application/json")
+    w.WriteHeader(200)
+    json.NewEncoder(w).Encode(map[string]any{
+        "id":   req.PetId,
+        "name": fmt.Sprintf("Pet-%d", req.PetId),
+    })
+    return nil
+})
 ```
 
 ### Testing Pattern
@@ -200,6 +221,12 @@ Tests use httptest.NewServer with the TestHandler:
 - **Empty response handling**: Responses without content (no schema defined) generate parameterless methods like `Respond200()` instead of requiring an empty struct parameter
 - **Options placement**: Options like `Times()` are passed to the Expect method, not the Respond method, for cleaner syntax: `ExpectGetPetById(1, Times(3)).RespondJSON200(...)`
 - **Error handling**: `RespondWithError(err)` is a separate method that returns HTTP 500, providing a clean way to test error scenarios
+- **Custom handlers via Handle() method**: Each builder generates a `Handle()` method that accepts a function with signature `func(RequestObject, http.ResponseWriter) error`, providing full control over HTTP responses for dynamic testing scenarios
+  - Uses raw responder pattern: generates a `{operationId}RawResponder` type that implements the Visit interface
+  - Handler receives both the typed request object AND raw `http.ResponseWriter`
+  - Integrates seamlessly with existing `expect()` mechanism - no changes to helpers.go needed
+  - Works with all options including `Times()`
+  - Particularly useful for stateful responses, conditional logic, or custom headers
 - **Request matching with rawRequestBody**: For operations with generic io.Reader bodies, the raw bytes are passed separately to `expect()` and `getResponse()` for matching, since io.Reader fields are consumed and can't be reliably hashed
 - **Ergonomic method signatures**: Path and query parameters are extracted as individual function parameters instead of requiring full RequestObject construction
 - **Multiple methods per operation**: Operations with request bodies generate separate methods for each content type (JSON, formdata, generic), all returning the same builder type
