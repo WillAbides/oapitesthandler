@@ -37,7 +37,9 @@ API calls in your tests.
 - The generate script runs `go generate ./...` which triggers:
     - oapi-codegen to generate client/server code from OpenAPI specs
     - oapitesthandler to generate test handler code
+    - Copying AGENTS.md to .github/copilot-instructions.md
 - **IMPORTANT**: Always run `./script/generate` after updating AGENTS.md to verify that the documentation accurately reflects the current code generation behavior
+- **IMPORTANT**: Never edit `.github/copilot-instructions.md` directly - it is generated from AGENTS.md when `./script/generate` is run. All documentation changes should be made to AGENTS.md.
 
 ### Building
 
@@ -53,7 +55,7 @@ API calls in your tests.
 - `expectResponses[REQ, RESP]` type manages expected responses for requests
 - `expectResponse[REQ, RESP]` type represents a single expected request/response pair
 - `keyHash()` creates deterministic hashes using JSON marshaling and FNV-128 hashing
-- `expect()` sets up expectations with optional `Times()` and `WithError()` options, accepts `rawRequestBody []byte` for matching io.Reader bodies
+- `expect()` sets up expectations with optional `Times()` and `MinTimes()` options, accepts `rawRequestBody []byte` for matching io.Reader bodies
 - `getResponse()` matches incoming requests to expectations, uses `rawRequestBody` for hash when provided (for io.Reader body matching)
 - For operations with generic Body (io.Reader), testServer reads the body bytes and passes to `getResponse()` for accurate matching
 
@@ -83,7 +85,7 @@ For each OpenAPI operation, the generator creates:
 
 1. An `expectResponses` field in TestHandler (e.g., `getPetByIdExpectResponses`)
 2. An `Expect{OperationID}` method on TestHandler that returns an `{OperationID}Expectation` builder
-3. Builder methods for each response type (e.g., `RespondJSON200`, `Respond404`, `RespondWithError`)
+3. Builder methods for each response type (e.g., `RespondJSON200`, `Respond404`)
 4. A handler method on testServer that calls `getResponse()` on the expectResponses field
 
 The generator uses a **fluent builder API pattern** where Expect methods return a builder, and you chain a Respond method to set the response:
@@ -124,9 +126,6 @@ builder.RespondJSON404(response)   // 404 Not Found with JSON content
 // Responses without content (like 204 No Content, or empty 200 responses)
 builder.Respond204()               // No parameter - response has no content
 builder.Respond200()               // No parameter - response has no content
-
-// Error responses
-builder.RespondWithError(err)      // Returns HTTP 500
 
 // Custom handler with full HTTP control
 builder.Handle(func(req RequestObject, w http.ResponseWriter) error {
@@ -188,9 +187,6 @@ handler.ExpectGetPetById(1, petstoretest.Times(3)).RespondJSON200(responseObj)
 handler.ExpectGetPetById(1).RespondJSON200(foundResponse)
 handler.ExpectGetPetById(999).Respond404()
 
-// Return an error (HTTP 500)
-handler.ExpectGetPetById(1).RespondWithError(errors.New("internal server error"))
-
 // Custom handler with dynamic responses
 handler.ExpectGetPetById(1).Handle(func(req GetPetByIdRequestObject, w http.ResponseWriter) error {
     w.Header().Set("Content-Type", "application/json")
@@ -220,7 +216,6 @@ Tests use httptest.NewServer with the TestHandler:
 - **Response method generation**: For each response defined in the OpenAPI spec, a `Respond{ContentType}{StatusCode}` method is generated on the builder (non-integer status codes like "default" are skipped)
 - **Empty response handling**: Responses without content (no schema defined) generate parameterless methods like `Respond200()` instead of requiring an empty struct parameter
 - **Options placement**: Options like `Times()` are passed to the Expect method, not the Respond method, for cleaner syntax: `ExpectGetPetById(1, Times(3)).RespondJSON200(...)`
-- **Error handling**: `RespondWithError(err)` is a separate method that returns HTTP 500, providing a clean way to test error scenarios
 - **Custom handlers via Handle() method**: Each builder generates a `Handle()` method that accepts a function with signature `func(RequestObject, http.ResponseWriter) error`, providing full control over HTTP responses for dynamic testing scenarios
   - Uses raw responder pattern: generates a `{operationId}RawResponder` type that implements the Visit interface
   - Handler receives both the typed request object AND raw `http.ResponseWriter`

@@ -72,16 +72,6 @@ func (b *{{$op.BuilderTypeName}}) {{.MethodName}}({{if not .IsEmpty}}resp {{.Typ
 
 {{end -}}
 
-// RespondWithError sets the expectation to return an error instead of a response.
-func (b *{{.BuilderTypeName}}) RespondWithError(err error) {
-	var zeroResp {{.ResponseType}}
-	{{if .HasGenericBody -}}
-	b.handler.{{.ExpectationField}}.expect(b.handler.tb, b.req, b.rawBody, zeroResp, append(b.opts, WithError(err))...)
-	{{else -}}
-	b.handler.{{.ExpectationField}}.expect(b.handler.tb, b.req, nil, zeroResp, append(b.opts, WithError(err))...)
-	{{end -}}
-}
-
 // Handle sets the expectation to invoke a custom handler function with full control over the HTTP response.
 func (b *{{.BuilderTypeName}}) Handle(fn func({{.RequestType}}, http.ResponseWriter) error) {
 	resp := {{.LowercaseOperationID}}RawResponder{req: b.req, fn: fn}

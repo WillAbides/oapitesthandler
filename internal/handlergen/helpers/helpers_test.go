@@ -1,7 +1,6 @@
 package helpers
 
 import (
-	"errors"
 	"io"
 	"strings"
 	"sync"
@@ -240,24 +239,6 @@ func TestExpectations(t *testing.T) {
 		_, err := exp.getResponse(tb, req, nil)
 		assert.Error(t, err, "expected error on third call")
 		tb.AssertErrors()
-	})
-
-	t.Run("WithError option", func(t *testing.T) {
-		tb := testutil.NewTB(t)
-		exp := &expectResponses[testRequest, testResponse]{}
-
-		req := testRequest{ID: 1, Name: "test"}
-		resp := testResponse{Status: 500, Message: "error"}
-		expectedErr := errors.New("test error")
-
-		exp.expect(tb, req, nil, resp, WithError(expectedErr))
-
-		got, err := exp.getResponse(tb, req, nil)
-		assert.Equal(t, expectedErr, err)
-		assert.Equal(t, resp.Status, got.Status)
-
-		tb.RunCleanups()
-		tb.AssertNoErrors()
 	})
 
 	t.Run("no expectation found", func(t *testing.T) {
