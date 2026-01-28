@@ -11,16 +11,34 @@ import (
 )
 
 type expectOpts struct {
-	error error
-	times int
+	error   error
+	times   int
+	atLeast bool
 }
 
 type ExpectOption func(*expectOpts)
 
 // Times sets the number of times the expectation should be met.
+// Panics if n is negative.
 func Times(n int) ExpectOption {
+	if n < 0 {
+		panic("Times: n must be non-negative")
+	}
 	return func(o *expectOpts) {
 		o.times = n
+	}
+}
+
+// MinTimes sets the minimum number of times the expectation should be met.
+// When n is 0, the expectation acts as a stub and can be called any number of times.
+// Panics if n is negative.
+func MinTimes(n int) ExpectOption {
+	if n < 0 {
+		panic("MinTimes: n must be non-negative")
+	}
+	return func(o *expectOpts) {
+		o.times = n
+		o.atLeast = true
 	}
 }
 
@@ -65,6 +83,7 @@ type expectResponse[REQ, RESP any] struct {
 
 	keyHash string
 	times   int
+	atLeast bool
 }
 
 type expectResponses[REQ, RESP any] struct {
@@ -100,6 +119,7 @@ func (e *expectResponses[REQ, RESP]) expect(t TB, req REQ, rawRequestBody io.Rea
 		response: resp,
 		error:    options.error,
 		times:    options.times,
+		atLeast:  options.atLeast,
 		keyHash:  keyHash(req, bodyBytes),
 	}
 	e.expectations = append(e.expectations, ex)
@@ -132,7 +152,7 @@ func (e *expectResponses[REQ, RESP]) getResponse(t TB, req REQ, rawRequestBody i
 
 	key := keyHash(req, bodyBytes)
 	idx := slices.IndexFunc(e.expectations, func(e *expectResponse[REQ, RESP]) bool {
-		return e.times > 0 && e.keyHash == key
+		return (e.atLeast || e.times > 0) && e.keyHash == key
 	})
 	if idx == -1 {
 		t.Errorf("no expectation found for request %+v", req)
@@ -140,6 +160,8 @@ func (e *expectResponses[REQ, RESP]) getResponse(t TB, req REQ, rawRequestBody i
 	}
 
 	ex := e.expectations[idx]
-	ex.times--
+	if ex.times > 0 {
+		ex.times--
+	}
 	return ex.response, ex.error
 }

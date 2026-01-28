@@ -212,6 +212,32 @@ func TestGeneratedHandler(t *testing.T) {
 		}
 	})
 
+	t.Run("MinTimes option - allows more than minimum", func(t *testing.T) {
+		handler := petstoretest.NewTestHandler(t)
+		server := httptest.NewServer(handler)
+		defer server.Close()
+
+		client, err := oapi.NewClientWithResponses(server.URL)
+		require.NoError(t, err)
+
+		pet := &petstoretest.Pet{
+			Id:     ptr(int32(1)),
+			Name:   "Marco",
+			Status: ptr(petstoretest.PetStatusSold),
+		}
+
+		// Expect at least 2 calls, but allow more
+		handler.ExpectGetPetById(1, petstoretest.MinTimes(2)).RespondJSON200(petstoretest.GetPetById200JSONResponse(*pet))
+
+		// Make 5 calls (more than the minimum of 2)
+		for range 5 {
+			resp, callErr := client.GetPetByIdWithResponse(context.Background(), 1)
+			require.NoError(t, callErr)
+			require.Equal(t, 200, resp.StatusCode())
+			require.NotNil(t, resp.JSON200)
+		}
+	})
+
 	t.Run("WithBody method - generic body with []byte", func(t *testing.T) {
 		handler := petstoretest.NewTestHandler(t)
 		server := httptest.NewServer(handler)
