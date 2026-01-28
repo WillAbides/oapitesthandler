@@ -46,6 +46,36 @@ API calls in your tests.
 - Build and run: `./script/oapitesthandler [args]`
 - Or use go tools: `go run github.com/willabides/oapitesthandler/cmd/oapitesthandler [args]`
 
+## Usage Patterns
+
+### Shared Models with --models Flag
+
+The `--models` flag allows you to use a shared package for OpenAPI model types instead of generating them in each test handler's output directory.
+
+**When to use --models:**
+- Sharing models between multiple test handlers for the same API
+- Sharing models between test handlers and oapi-codegen client/server code
+- Keeping test handler code separate from model definitions
+- Working in a monorepo with shared API types
+
+**Example workflow:**
+
+```go
+// 1. Generate models in a shared package using oapi-codegen
+//go:generate go tool oapi-codegen -config ./oapi-codegen.yaml ./openapi.yaml
+
+// 2. Generate test handler with --models pointing to shared package
+//go:generate go tool oapitesthandler ./openapi.yaml --config ./oapi-codegen.yaml --out internal/petstoretest --models ./internal/oapi
+```
+
+**How it works:**
+- The shared package must already exist and contain the model types
+- oapitesthandler reads the existing types and creates type aliases in the generated code
+- Request/response objects reference the shared model types
+- This ensures type compatibility across client, server, and test handler code
+
+See `example/petstore` for a complete working example.
+
 ## Architecture
 
 ### Core Components
@@ -63,10 +93,15 @@ API calls in your tests.
 
 - Reads OpenAPI spec and oapi-codegen config YAML
 - Generates four files in output directory:
-    - `oapi_gen.go`: Standard oapi-codegen output (models, strict server types)
+    - `oapi_models_gen.go`: OpenAPI model types (contains actual type definitions by default; when --models is used, contains type aliases referencing the external package)
+    - `oapi_gen.go`: Standard oapi-codegen output (strict server types, request/response objects)
     - `handler.go`: TestHandler with builder types and Expect methods that return builders
     - `server.go`: testServer that implements the strict server interface, reads io.Reader bodies for matching
     - `helpers.go`: Helper types and functions (TB interface, ExpectOption, expectResponses, expectResponse)
+- Supports optional --models flag to specify external package for OpenAPI models:
+    - When specified, `oapi_models_gen.go` is updated to contain type aliases instead of actual type definitions
+    - Allows sharing model types between multiple test handlers or with client/server code
+    - Uses Go AST manipulation to create type aliases from the external package
 - Uses templates to generate handler methods:
     - Operations without bodies: path/query parameters extracted as individual arguments
     - Operations with bodies: multiple methods using oapi-codegen's `Suffix()` for naming
@@ -76,7 +111,8 @@ API calls in your tests.
 **cmd/oapitesthandler** - CLI entry point
 
 - Uses kong for CLI parsing
-- Takes: OpenAPI spec, oapi-codegen config, output directory
+- Takes: OpenAPI spec, oapi-codegen config, output directory, optional models package
+- Optional --models flag specifies Go import path for external models package (e.g., `./internal/oapi` or `github.com/user/pkg/models`)
 - Delegates to handlergen.Run()
 
 ### Generated Code Pattern
