@@ -2,7 +2,6 @@ package metatest
 
 import (
 	"bytes"
-	"context"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -38,12 +37,12 @@ func TestGeneratedHandler(t *testing.T) {
 		handler.ExpectGetPetById(1).RespondJSON200(petstoretest.GetPetById200JSONResponse(*pet))
 
 		// Make two calls with the same parameters
-		resp1, err := client.GetPetByIdWithResponse(context.Background(), 1)
+		resp1, err := client.GetPetByIdWithResponse(t.Context(), 1)
 		require.NoError(t, err)
 		require.Equal(t, 200, resp1.StatusCode())
 		require.NotNil(t, resp1.JSON200)
 
-		resp2, err := client.GetPetByIdWithResponse(context.Background(), 1)
+		resp2, err := client.GetPetByIdWithResponse(t.Context(), 1)
 		require.NoError(t, err)
 		require.Equal(t, 200, resp2.StatusCode())
 		require.NotNil(t, resp2.JSON200)
@@ -74,12 +73,12 @@ func TestGeneratedHandler(t *testing.T) {
 		handler.ExpectGetPetById(1).RespondJSON200(petstoretest.GetPetById200JSONResponse(*marco))
 		handler.ExpectGetPetById(2).RespondJSON200(petstoretest.GetPetById200JSONResponse(*dolly))
 
-		resp1, err := client.GetPetByIdWithResponse(context.Background(), 1)
+		resp1, err := client.GetPetByIdWithResponse(t.Context(), 1)
 		require.NoError(t, err)
 		require.Equal(t, 200, resp1.StatusCode())
 		require.Equal(t, marco.Name, resp1.JSON200.Name)
 
-		resp2, err := client.GetPetByIdWithResponse(context.Background(), 2)
+		resp2, err := client.GetPetByIdWithResponse(t.Context(), 2)
 		require.NoError(t, err)
 		require.Equal(t, 200, resp2.StatusCode())
 		require.Equal(t, dolly.Name, resp2.JSON200.Name)
@@ -107,7 +106,7 @@ func TestGeneratedHandler(t *testing.T) {
 
 		handler.ExpectGetPetRegistration(1).RespondJSON200(petstoretest.GetPetRegistration200JSONResponse(petWithCustomTypes))
 
-		resp, err := client.GetPetRegistrationWithResponse(context.Background(), 1)
+		resp, err := client.GetPetRegistrationWithResponse(t.Context(), 1)
 		require.NoError(t, err)
 		require.Equal(t, 200, resp.StatusCode())
 		require.NotNil(t, resp.JSON200)
@@ -132,7 +131,7 @@ func TestGeneratedHandler(t *testing.T) {
 
 		handler.ExpectGetPetMetadata(1, nil).RespondJSON200(petstoretest.GetPetMetadata200JSONResponse(metadata))
 
-		resp, err := client.GetPetMetadataWithResponse(context.Background(), 1, nil)
+		resp, err := client.GetPetMetadataWithResponse(t.Context(), 1, nil)
 		require.NoError(t, err)
 		require.Equal(t, 200, resp.StatusCode())
 		require.Equal(t, &metadata, resp.JSON200)
@@ -168,7 +167,7 @@ func TestGeneratedHandler(t *testing.T) {
 		}).RespondJSON200(petstoretest.FindPetsByStatus200JSONResponse([]petstoretest.Pet{*dolly}))
 
 		// Call GetPetById
-		resp1, err := client.GetPetByIdWithResponse(context.Background(), 1)
+		resp1, err := client.GetPetByIdWithResponse(t.Context(), 1)
 		require.NoError(t, err)
 		require.Equal(t, 200, resp1.StatusCode())
 		require.NotNil(t, resp1.JSON200)
@@ -177,7 +176,7 @@ func TestGeneratedHandler(t *testing.T) {
 
 		// Call FindPetsByStatus
 		resp2, err := client.FindPetsByStatusWithResponse(
-			context.Background(),
+			t.Context(),
 			&oapi.FindPetsByStatusParams{
 				Status: oapi.FindPetsByStatusParamsStatusAvailable,
 			},
@@ -206,7 +205,7 @@ func TestGeneratedHandler(t *testing.T) {
 
 		// Make three calls
 		for range 3 {
-			resp, callErr := client.GetPetByIdWithResponse(context.Background(), 1)
+			resp, callErr := client.GetPetByIdWithResponse(t.Context(), 1)
 			require.NoError(t, callErr)
 			require.Equal(t, 200, resp.StatusCode())
 		}
@@ -231,7 +230,7 @@ func TestGeneratedHandler(t *testing.T) {
 
 		// Make 5 calls (more than the minimum of 2)
 		for range 5 {
-			resp, callErr := client.GetPetByIdWithResponse(context.Background(), 1)
+			resp, callErr := client.GetPetByIdWithResponse(t.Context(), 1)
 			require.NoError(t, callErr)
 			require.Equal(t, 200, resp.StatusCode())
 			require.NotNil(t, resp.JSON200)
@@ -258,7 +257,7 @@ func TestGeneratedHandler(t *testing.T) {
 
 		// Make request with XML body
 		resp, err := client.AddPetWithBodyWithResponse(
-			context.Background(),
+			t.Context(),
 			"application/xml",
 			bytes.NewReader(xmlBody),
 		)
@@ -288,7 +287,7 @@ func TestGeneratedHandler(t *testing.T) {
 
 		// Make request using typed JSON method
 		resp1, err := client.UpdateUserWithResponse(
-			context.Background(),
+			t.Context(),
 			"john",
 			oapi.UpdateUserJSONRequestBody{
 				Id:       ptr(int64(1)),
@@ -300,7 +299,7 @@ func TestGeneratedHandler(t *testing.T) {
 
 		// Make request using generic WithBody method
 		resp2, err := client.UpdateUserWithBodyWithResponse(
-			context.Background(),
+			t.Context(),
 			"john",
 			"application/xml",
 			bytes.NewReader(xmlBody),
@@ -343,7 +342,7 @@ func TestFailureScenarios(t *testing.T) {
 		require.NoError(t, err)
 
 		// Make a request without setting any expectation
-		_, err = client.GetPetByIdWithResponse(context.Background(), 1)
+		_, err = client.GetPetByIdWithResponse(t.Context(), 1)
 		require.NoError(t, err)
 
 		// Verify that an error was reported about no matching expectation
@@ -365,12 +364,12 @@ func TestFailureScenarios(t *testing.T) {
 		})
 
 		// Make the expected call
-		resp, err := client.GetPetByIdWithResponse(context.Background(), 1)
+		resp, err := client.GetPetByIdWithResponse(t.Context(), 1)
 		require.NoError(t, err)
 		require.Equal(t, 200, resp.StatusCode())
 
 		// Make an additional unexpected call
-		_, err = client.GetPetByIdWithResponse(context.Background(), 1)
+		_, err = client.GetPetByIdWithResponse(t.Context(), 1)
 		require.NoError(t, err)
 
 		// Verify that an error was reported about no matching expectation
@@ -394,7 +393,7 @@ func TestFailureScenarios(t *testing.T) {
 
 		// Only make 2 calls
 		for range 2 {
-			resp, callErr := client.GetPetByIdWithResponse(context.Background(), 1)
+			resp, callErr := client.GetPetByIdWithResponse(t.Context(), 1)
 			require.NoError(t, callErr)
 			require.Equal(t, 200, resp.StatusCode())
 		}
@@ -423,7 +422,7 @@ func TestHandleMethod(t *testing.T) {
 			return writeErr
 		})
 
-		resp, err := client.GetPetByIdWithResponse(context.Background(), 1)
+		resp, err := client.GetPetByIdWithResponse(t.Context(), 1)
 		require.NoError(t, err)
 		require.Equal(t, 200, resp.StatusCode())
 		require.NotNil(t, resp.JSON200)
@@ -451,7 +450,7 @@ func TestHandleMethod(t *testing.T) {
 		})
 
 		for i := 1; i <= 3; i++ {
-			resp, callErr := client.GetPetByIdWithResponse(context.Background(), 1)
+			resp, callErr := client.GetPetByIdWithResponse(t.Context(), 1)
 			require.NoError(t, callErr)
 			require.Equal(t, 200, resp.StatusCode())
 		}
@@ -488,13 +487,13 @@ func TestHandleMethod(t *testing.T) {
 		})
 
 		// Call with ID 1 should succeed
-		resp1, err := client.GetPetByIdWithResponse(context.Background(), 1)
+		resp1, err := client.GetPetByIdWithResponse(t.Context(), 1)
 		require.NoError(t, err)
 		require.Equal(t, 200, resp1.StatusCode())
 		require.NotNil(t, resp1.JSON200)
 
 		// Call with ID 999 should return 404
-		resp2, err := client.GetPetByIdWithResponse(context.Background(), 999)
+		resp2, err := client.GetPetByIdWithResponse(t.Context(), 999)
 		require.NoError(t, err)
 		require.Equal(t, 404, resp2.StatusCode())
 	})
@@ -513,7 +512,7 @@ func TestHandleMethod(t *testing.T) {
 		})
 
 		// The error should result in HTTP 500
-		resp, err := client.GetPetByIdWithResponse(context.Background(), 1)
+		resp, err := client.GetPetByIdWithResponse(t.Context(), 1)
 		require.NoError(t, err)
 		require.Equal(t, 500, resp.StatusCode())
 	})
@@ -542,7 +541,7 @@ func TestHandleMethod(t *testing.T) {
 		})
 
 		resp, err := client.UpdateUserWithResponse(
-			context.Background(),
+			t.Context(),
 			"john",
 			oapi.UpdateUserJSONRequestBody{
 				Id:       ptr(int64(1)),
@@ -592,7 +591,7 @@ func TestHandleMethod(t *testing.T) {
 
 		// Make request with XML body
 		resp, err := client.AddPetWithBodyWithResponse(
-			context.Background(),
+			t.Context(),
 			"application/xml",
 			bytes.NewReader(xmlBody),
 		)
