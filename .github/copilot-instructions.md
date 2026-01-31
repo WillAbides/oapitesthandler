@@ -106,16 +106,17 @@ See `example/petstore` for a complete working example.
 **internal/handlergen** - Code generation engine
 
 - Reads OpenAPI spec and oapi-codegen config YAML
-- Generates four files in output directory:
+- Generates files in output directory:
     - `oapi_models_gen.go`: OpenAPI model types (contains actual type definitions by default; when --models is used, contains type aliases referencing the external package)
-    - `oapi_gen.go`: Standard oapi-codegen output (strict server types, request/response objects)
+    - `oapi_server_gen.go`: Standard oapi-codegen output (strict server types, request/response objects)
     - `handler.go`: TestHandler with builder types and Expect methods that return builders
     - `server.go`: testServer that implements the strict server interface, reads io.Reader bodies for matching
     - `helpers.go`: Helper types and functions (TB interface, ExpectOption, expectResponses, expectResponse)
 - Supports optional --models flag to specify external package for OpenAPI models:
-    - When specified, `oapi_models_gen.go` is updated to contain type aliases instead of actual type definitions
+    - When specified, custom oapi-codegen templates are injected via UserTemplates configuration
+    - Templates (typedef.tmpl, param-types.tmpl, constants.tmpl) generate type aliases instead of actual type definitions
+    - Templates reference types from modelspkg import (added via AdditionalImports)
     - Allows sharing model types between multiple test handlers or with client/server code
-    - Uses Go AST manipulation to create type aliases from the external package
 - Uses templates to generate handler methods:
     - Operations without bodies: path/query parameters extracted as individual arguments
     - Operations with bodies: multiple methods using oapi-codegen's `Suffix()` for naming

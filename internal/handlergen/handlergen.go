@@ -162,7 +162,7 @@ func generateOapiCodegen(spec *openapi3.T, opts codegen.Configuration, outFile, 
 
 	generated, err := codegen.Generate(spec, opts)
 	if err != nil {
-		return fmt.Errorf("generating server code: %w", err)
+		return fmt.Errorf("generating oapi-codegen output: %w", err)
 	}
 
 	out, err := os.Create(outFile)
