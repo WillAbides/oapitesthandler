@@ -2,7 +2,15 @@
 
 package generated
 
+import (
+	"context"
+)
+
 type testServer struct {
 	tb      TB
 	handler *TestHandler
+}
+
+func (t *testServer) GetUser(_ context.Context, req GetUserRequestObject) (GetUserResponseObject, error) {
+	return t.handler.getUserExpectResponses.getResponse(t.tb, req, nil)
 }

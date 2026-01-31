@@ -9,6 +9,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"slices"
 	"strings"
 	"text/template"
 
@@ -160,6 +161,26 @@ func generateOapiCodegen(spec *openapi3.T, opts codegen.Configuration, outFile, 
 			Alias:   "modelspkg",
 			Package: modelsPkgPath,
 		})
+	}
+
+	// oapi-codegen filters operation IDs before normalizing them to PascalCase.
+	// The user's config typically uses snake_case IDs from the OpenAPI spec,
+	// but oapi-codegen needs both the original and normalized forms to match properly.
+	// Add normalized variants to ensure operations are included.
+	if len(opts.OutputOptions.IncludeOperationIDs) > 0 {
+		ids := make([]string, 0, len(opts.OutputOptions.IncludeOperationIDs)*2)
+		for _, id := range opts.OutputOptions.IncludeOperationIDs {
+			ids = append(ids, id)
+			camel := codegen.ToCamelCase(id)
+			if !slices.Contains(ids, camel) {
+				ids = append(ids, camel)
+			}
+			camel = codegen.ToCamelCaseWithInitialism(id)
+			if !slices.Contains(ids, camel) {
+				ids = append(ids, camel)
+			}
+		}
+		opts.OutputOptions.IncludeOperationIDs = ids
 	}
 
 	generated, err := codegen.Generate(spec, opts)
