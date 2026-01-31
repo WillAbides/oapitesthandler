@@ -12,7 +12,6 @@ type (
 	Product              = modelspkg.Product
 	UpdateProductRequest = modelspkg.UpdateProductRequest
 )
-type ()
 
 // UpdateProductJSONRequestBody defines body for UpdateProduct for application/json ContentType.
 type UpdateProductJSONRequestBody = UpdateProductRequest
