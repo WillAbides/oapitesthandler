@@ -8,6 +8,7 @@ import (
 )
 
 type (
+	Meta                 = modelspkg.Meta
 	Product              = modelspkg.Product
 	UpdateProductRequest = modelspkg.UpdateProductRequest
 )

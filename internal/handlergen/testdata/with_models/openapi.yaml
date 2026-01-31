@@ -48,6 +48,14 @@ paths:
           description: Product not found
 components:
   schemas:
+    Meta:
+      type: object
+      properties:
+        name:
+          type: string
+      additionalProperties: true
+      required:
+        - name
     Product:
       type: object
       required:
@@ -65,6 +73,8 @@ components:
           format: double
         category:
           type: string
+        meta:
+          $ref: '#/components/schemas/Meta'
     UpdateProductRequest:
       type: object
       properties:

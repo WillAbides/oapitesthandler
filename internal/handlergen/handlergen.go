@@ -150,9 +150,11 @@ func generateServer(spec *openapi3.T, opts codegen.Configuration, outDir, models
 func generateOapiCodegen(spec *openapi3.T, opts codegen.Configuration, outFile, modelsPkgPath string) (errOut error) {
 	if modelsPkgPath != "" {
 		opts.OutputOptions.UserTemplates = map[string]string{
-			"typedef.tmpl":     oapiCodegenTemplate("typedef.tmpl"),
-			"param-types.tmpl": oapiCodegenTemplate("param-types.tmpl"),
-			"constants.tmpl":   oapiCodegenTemplate("constants.tmpl"),
+			"typedef.tmpl":                         oapiCodegenTemplate("typedef.tmpl"),
+			"param-types.tmpl":                     oapiCodegenTemplate("param-types.tmpl"),
+			"constants.tmpl":                       oapiCodegenTemplate("constants.tmpl"),
+			"additional-properties.tmpl":           oapiCodegenTemplate("additional-properties.tmpl"),
+			"union-and-additional-properties.tmpl": oapiCodegenTemplate("union-and-additional-properties.tmpl"),
 		}
 		opts.AdditionalImports = append(opts.AdditionalImports, codegen.AdditionalImport{
 			Alias:   "modelspkg",
