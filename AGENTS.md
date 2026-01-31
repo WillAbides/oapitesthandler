@@ -16,6 +16,16 @@ API calls in your tests.
 - Run specific package tests: `go test ./path/to/package`
 - Run single test: `go test -run TestName ./path/to/package`
 
+#### Snapshot Testing
+
+The handlergen package uses snapshot testing to verify generated code output. Tests generate code to a temporary directory and compare it against reference snapshots stored in `testdata/*/generated/` directories.
+
+**To regenerate snapshots**, set the `UPDATE_SNAPS` environment variable when running tests:
+- **Regenerate all snapshots**: `UPDATE_SNAPS=true go test ./internal/handlergen`
+- **Regenerate specific test snapshots**: `UPDATE_SNAPS=true go test ./internal/handlergen -run TestRun/simple_get`
+
+The snapshots are stored in `generated/` subdirectories within each test case's testdata directory (e.g., `testdata/simple_get/generated/`), making the reference code directly viewable in your IDE.
+
 ### Code Quality
 
 - Format code: `./script/fmt`
