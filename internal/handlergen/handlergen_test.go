@@ -28,6 +28,10 @@ func TestRun(t *testing.T) {
 			testdataDir:   "testdata/with_models",
 			modelsPkgPath: "./models",
 		},
+		{
+			name:        "with_operation_filter",
+			testdataDir: "testdata/with_operation_filter",
+		},
 	}
 
 	for _, test := range tests {
@@ -36,11 +40,7 @@ func TestRun(t *testing.T) {
 			outputDir := filepath.Join(t.TempDir(), "generated")
 			require.NoError(t, os.MkdirAll(outputDir, 0o755))
 
-			// If models package is specified, create a proper module structure
-			modelsPkgPath := test.modelsPkgPath
-
-			// Run handlergen
-			err := Run("openapi.yaml", "oapi-codegen.yaml", outputDir, modelsPkgPath)
+			err := Run("openapi.yaml", "oapi-codegen.yaml", outputDir, test.modelsPkgPath)
 			require.NoError(t, err)
 
 			if os.Getenv("UPDATE_SNAPS") != "" {
@@ -49,7 +49,6 @@ func TestRun(t *testing.T) {
 				require.NoError(t, copyDir(outputDir, "generated"))
 			}
 
-			// In compare mode, verify generated files match snapshots
 			assertEqualDir(t, "generated", outputDir)
 		})
 	}

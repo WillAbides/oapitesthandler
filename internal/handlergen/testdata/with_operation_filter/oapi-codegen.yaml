@@ -1,0 +1,8 @@
+package: generated
+generate:
+  models: true
+  client: true
+  std-http-server: true
+output-options:
+  include-operation-ids:
+    - get_user

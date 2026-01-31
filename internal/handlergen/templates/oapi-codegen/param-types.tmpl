@@ -1,5 +1,11 @@
+{{- $hasTypes := false -}}
+{{- range . -}}
+  {{- if .TypeDefinitions -}}{{- $hasTypes = true -}}{{- end -}}
+{{- end -}}
+{{- if $hasTypes -}}
 type (
-{{range . }}{{$opid := .OperationId }}{{range .TypeDefinitions -}}
+{{- range . }}{{range .TypeDefinitions}}
     {{.TypeName}} = modelspkg.{{.TypeName}}
-{{end}}{{end}}
+{{end}}{{- end}}
 )
+{{end}}

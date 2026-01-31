@@ -1,5 +1,7 @@
+{{if .Types -}}
 type (
 {{range .Types -}}
     {{.TypeName}} = modelspkg.{{.TypeName}}
 {{end}}
 )
+{{end -}}

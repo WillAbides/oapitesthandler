@@ -29,15 +29,23 @@ type (
 	Error              = modelspkg.Error
 )
 type (
-	FindPetsByStatusParams           = modelspkg.FindPetsByStatusParams
-	FindPetsByStatusParamsStatus     = modelspkg.FindPetsByStatusParamsStatus
-	FindPetsByTagsParams             = modelspkg.FindPetsByTagsParams
-	DeletePetParams                  = modelspkg.DeletePetParams
-	UpdatePetWithFormParams          = modelspkg.UpdatePetWithFormParams
-	GetPetMetadataParams             = modelspkg.GetPetMetadataParams
-	UploadFileParams                 = modelspkg.UploadFileParams
+	FindPetsByStatusParams = modelspkg.FindPetsByStatusParams
+
+	FindPetsByStatusParamsStatus = modelspkg.FindPetsByStatusParamsStatus
+
+	FindPetsByTagsParams = modelspkg.FindPetsByTagsParams
+
+	DeletePetParams = modelspkg.DeletePetParams
+
+	UpdatePetWithFormParams = modelspkg.UpdatePetWithFormParams
+
+	GetPetMetadataParams = modelspkg.GetPetMetadataParams
+
+	UploadFileParams = modelspkg.UploadFileParams
+
 	CreateUsersWithListInputJSONBody = modelspkg.CreateUsersWithListInputJSONBody
-	LoginUserParams                  = modelspkg.LoginUserParams
+
+	LoginUserParams = modelspkg.LoginUserParams
 )
 
 // AddPetJSONRequestBody defines body for AddPet for application/json ContentType.
