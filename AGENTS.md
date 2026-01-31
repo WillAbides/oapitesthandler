@@ -16,6 +16,16 @@ API calls in your tests.
 - Run specific package tests: `go test ./path/to/package`
 - Run single test: `go test -run TestName ./path/to/package`
 
+#### Snapshot Testing
+
+The handlergen package uses snapshot testing to verify generated code output. Tests generate code to a temporary directory and compare it against reference snapshots stored in `testdata/*/generated/` directories.
+
+**To regenerate snapshots**, set the `UPDATE_SNAPS` environment variable when running tests:
+- **Regenerate all snapshots**: `UPDATE_SNAPS=true go test ./internal/handlergen`
+- **Regenerate specific test snapshots**: `UPDATE_SNAPS=true go test ./internal/handlergen -run TestRun/simple_get`
+
+The snapshots are stored in `generated/` subdirectories within each test case's testdata directory (e.g., `testdata/simple_get/generated/`), making the reference code directly viewable in your IDE.
+
 ### Code Quality
 
 - Format code: `./script/fmt`
@@ -46,6 +56,36 @@ API calls in your tests.
 - Build and run: `./script/oapitesthandler [args]`
 - Or use go tools: `go run github.com/willabides/oapitesthandler/cmd/oapitesthandler [args]`
 
+## Usage Patterns
+
+### Shared Models with --models Flag
+
+The `--models` flag allows you to use a shared package for OpenAPI model types instead of generating them in each test handler's output directory.
+
+**When to use --models:**
+- Sharing models between multiple test handlers for the same API
+- Sharing models between test handlers and oapi-codegen client/server code
+- Keeping test handler code separate from model definitions
+- Working in a monorepo with shared API types
+
+**Example workflow:**
+
+```go
+// 1. Generate models in a shared package using oapi-codegen
+//go:generate go tool oapi-codegen -config ./oapi-codegen.yaml ./openapi.yaml
+
+// 2. Generate test handler with --models pointing to shared package
+//go:generate go tool oapitesthandler ./openapi.yaml --config ./oapi-codegen.yaml --out internal/petstoretest --models ./internal/oapi
+```
+
+**How it works:**
+- The shared package must already exist and contain the model types
+- oapitesthandler reads the existing types and creates type aliases in the generated code
+- Request/response objects reference the shared model types
+- This ensures type compatibility across client, server, and test handler code
+
+See `example/petstore` for a complete working example.
+
 ## Architecture
 
 ### Core Components
@@ -62,11 +102,17 @@ API calls in your tests.
 **internal/handlergen** - Code generation engine
 
 - Reads OpenAPI spec and oapi-codegen config YAML
-- Generates four files in output directory:
-    - `oapi_gen.go`: Standard oapi-codegen output (models, strict server types)
+- Generates files in output directory:
+    - `oapi_models_gen.go`: OpenAPI model types (contains actual type definitions by default; when --models is used, contains type aliases referencing the external package)
+    - `oapi_server_gen.go`: Standard oapi-codegen output (strict server types, request/response objects)
     - `handler.go`: TestHandler with builder types and Expect methods that return builders
     - `server.go`: testServer that implements the strict server interface, reads io.Reader bodies for matching
     - `helpers.go`: Helper types and functions (TB interface, ExpectOption, expectResponses, expectResponse)
+- Supports optional --models flag to specify external package for OpenAPI models:
+    - When specified, custom oapi-codegen templates are injected via UserTemplates configuration
+    - Templates (typedef.tmpl, param-types.tmpl, constants.tmpl) generate type aliases instead of actual type definitions
+    - Templates reference types from modelspkg import (added via AdditionalImports)
+    - Allows sharing model types between multiple test handlers or with client/server code
 - Uses templates to generate handler methods:
     - Operations without bodies: path/query parameters extracted as individual arguments
     - Operations with bodies: multiple methods using oapi-codegen's `Suffix()` for naming
@@ -76,7 +122,8 @@ API calls in your tests.
 **cmd/oapitesthandler** - CLI entry point
 
 - Uses kong for CLI parsing
-- Takes: OpenAPI spec, oapi-codegen config, output directory
+- Takes: OpenAPI spec, oapi-codegen config, output directory, optional models package
+- Optional --models flag specifies Go import path for external models package (e.g., `./internal/oapi` or `github.com/user/pkg/models`)
 - Delegates to handlergen.Run()
 
 ### Generated Code Pattern

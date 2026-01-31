@@ -1,0 +1,5 @@
+type (
+{{range . }}{{$opid := .OperationId }}{{range .TypeDefinitions -}}
+    {{.TypeName}} = modelspkg.{{.TypeName}}
+{{end}}{{end}}
+)

@@ -1,0 +1,5 @@
+package: simpleapi
+output: output.go
+generate:
+  models: true
+  client: true

@@ -1,0 +1,5 @@
+package: bodiesapi
+output: output.go
+generate:
+  models: true
+  strict-server: true

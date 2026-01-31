@@ -1,0 +1,5 @@
+package: models
+output: models/output.go
+generate:
+  models: true
+  strict-server: true

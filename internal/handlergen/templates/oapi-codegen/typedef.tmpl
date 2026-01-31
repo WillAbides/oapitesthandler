@@ -1,0 +1,5 @@
+type (
+{{range .Types -}}
+    {{.TypeName}} = modelspkg.{{.TypeName}}
+{{end}}
+)

@@ -137,6 +137,8 @@ Flags:
   -h, --help             Show context-sensitive help.
   -c, --config=STRING    Path to oapi-codegen config YAML file
   -o, --out=STRING       Directory to write the generated test handler to
+      --models=STRING    Path to a package containing the OpenAPI models. If not specified, models
+                         will be generated into the output directory.
       --version          Output the oapitesthandler version and exit.
 ```
 
