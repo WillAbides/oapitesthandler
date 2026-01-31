@@ -175,10 +175,6 @@ func generateOapiCodegen(spec *openapi3.T, opts codegen.Configuration, outFile, 
 			if !slices.Contains(ids, camel) {
 				ids = append(ids, camel)
 			}
-			camel = codegen.ToCamelCaseWithInitialism(id)
-			if !slices.Contains(ids, camel) {
-				ids = append(ids, camel)
-			}
 		}
 		opts.OutputOptions.IncludeOperationIDs = ids
 	}
