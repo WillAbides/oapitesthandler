@@ -28,6 +28,10 @@ func TestRun(t *testing.T) {
 			testdataDir:   "testdata/with_models",
 			modelsPkgPath: "./models",
 		},
+		{
+			name:        "with_operation_filter",
+			testdataDir: "testdata/with_operation_filter",
+		},
 	}
 
 	for _, test := range tests {
@@ -51,6 +55,14 @@ func TestRun(t *testing.T) {
 
 			// In compare mode, verify generated files match snapshots
 			assertEqualDir(t, "generated", outputDir)
+
+			// Additional checks for specific test cases
+			if test.name == "with_operation_filter" {
+				// Verify that operations are actually generated when using include-operation-ids
+				handlerContent, err := os.ReadFile(filepath.Join(outputDir, "handler.go"))
+				require.NoError(t, err)
+				assert.Contains(t, string(handlerContent), "ExpectGetUser", "Expected ExpectGetUser method to be generated with include-operation-ids filter")
+			}
 		})
 	}
 }
