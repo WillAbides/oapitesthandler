@@ -175,12 +175,11 @@ builder.Respond204()               // No parameter - response has no content
 builder.Respond200()               // No parameter - response has no content
 
 // Custom handler with full HTTP control
-builder.Handle(func(req RequestObject, w http.ResponseWriter) error {
+builder.Handle(func(req RequestObject, w http.ResponseWriter) {
     // Full control over HTTP response
     w.Header().Set("Content-Type", "application/json")
     w.WriteHeader(200)
     json.NewEncoder(w).Encode(dynamicResponse)
-    return nil
 })
 ```
 
@@ -235,14 +234,13 @@ handler.ExpectGetPetById(1).RespondJSON200(foundResponse)
 handler.ExpectGetPetById(999).Respond404()
 
 // Custom handler with dynamic responses
-handler.ExpectGetPetById(1).Handle(func(req GetPetByIdRequestObject, w http.ResponseWriter) error {
+handler.ExpectGetPetById(1).Handle(func(req GetPetByIdRequestObject, w http.ResponseWriter) {
     w.Header().Set("Content-Type", "application/json")
     w.WriteHeader(200)
     json.NewEncoder(w).Encode(map[string]any{
         "id":   req.PetId,
         "name": fmt.Sprintf("Pet-%d", req.PetId),
     })
-    return nil
 })
 ```
 
@@ -263,7 +261,7 @@ Tests use httptest.NewServer with the TestHandler:
 - **Response method generation**: For each response defined in the OpenAPI spec, a `Respond{ContentType}{StatusCode}` method is generated on the builder (non-integer status codes like "default" are skipped)
 - **Empty response handling**: Responses without content (no schema defined) generate parameterless methods like `Respond200()` instead of requiring an empty struct parameter
 - **Options placement**: Options like `Times()` are passed to the Expect method, not the Respond method, for cleaner syntax: `ExpectGetPetById(1, Times(3)).RespondJSON200(...)`
-- **Custom handlers via Handle() method**: Each builder generates a `Handle()` method that accepts a function with signature `func(RequestObject, http.ResponseWriter) error`, providing full control over HTTP responses for dynamic testing scenarios
+- **Custom handlers via Handle() method**: Each builder generates a `Handle()` method that accepts a function with signature `func(RequestObject, http.ResponseWriter)`, providing full control over HTTP responses for dynamic testing scenarios
   - Uses raw responder pattern: generates a `{operationId}RawResponder` type that implements the Visit interface
   - Handler receives both the typed request object AND raw `http.ResponseWriter`
   - Integrates seamlessly with existing `expect()` mechanism - no changes to helpers.go needed

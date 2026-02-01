@@ -54,11 +54,12 @@ type {{.BuilderTypeName}} struct {
 
 type {{.LowercaseOperationID}}RawResponder struct {
 	req {{.RequestType}}
-	fn  func({{.RequestType}}, http.ResponseWriter) error
+	fn  func({{.RequestType}}, http.ResponseWriter)
 }
 
 func (r {{.LowercaseOperationID}}RawResponder) Visit{{.OperationID}}Response(w http.ResponseWriter) error {
-	return r.fn(r.req, w)
+	r.fn(r.req, w)
+	return nil
 }
 
 {{range .ResponseTypes -}}
@@ -89,7 +90,7 @@ func (b *{{$op.BuilderTypeName}}) {{.MethodName}}({{if not .IsEmpty}}{{if .IsAli
 {{end -}}
 
 // Handle sets the expectation to invoke a custom handler function with full control over the HTTP response.
-func (b *{{.BuilderTypeName}}) Handle(fn func({{.RequestType}}, http.ResponseWriter) error) {
+func (b *{{.BuilderTypeName}}) Handle(fn func({{.RequestType}}, http.ResponseWriter)) {
 	resp := {{.LowercaseOperationID}}RawResponder{req: b.req, fn: fn}
 	{{if .HasGenericBody -}}
 	b.handler.{{.ExpectationField}}.expect(b.handler.tb, b.req, b.rawBody, resp, b.opts...)

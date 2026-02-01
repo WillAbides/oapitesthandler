@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/willabides/oapitesthandler/example/petstore/internal/oapi"
 	"github.com/willabides/oapitesthandler/example/petstore/internal/petstoretest"
@@ -415,11 +414,11 @@ func TestHandleMethod(t *testing.T) {
 		client, err := oapi.NewClientWithResponses(server.URL)
 		require.NoError(t, err)
 
-		handler.ExpectGetPetById(1).Handle(func(req petstoretest.GetPetByIdRequestObject, w http.ResponseWriter) error {
+		handler.ExpectGetPetById(1).Handle(func(req petstoretest.GetPetByIdRequestObject, w http.ResponseWriter) {
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(200)
-			_, writeErr := w.Write([]byte(`{"id":1,"name":"Dynamic Pet"}`))
-			return writeErr
+			_, err = w.Write([]byte(`{"id":1,"name":"Dynamic Pet"}`))
+			require.NoError(t, err)
 		})
 
 		resp, err := client.GetPetByIdWithResponse(t.Context(), 1)
@@ -441,12 +440,12 @@ func TestHandleMethod(t *testing.T) {
 		handler.ExpectGetPetById(1, petstoretest.Times(3)).Handle(func(
 			req petstoretest.GetPetByIdRequestObject,
 			w http.ResponseWriter,
-		) error {
+		) {
 			callCount++
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(200)
-			_, writeErr := w.Write([]byte(`{"id":1,"name":"Pet ` + string(rune('0'+callCount)) + `"}`))
-			return writeErr
+			_, err = w.Write([]byte(`{"id":1,"name":"Pet ` + string(rune('0'+callCount)) + `"}`))
+			require.NoError(t, err)
 		})
 
 		for i := 1; i <= 3; i++ {
@@ -467,23 +466,21 @@ func TestHandleMethod(t *testing.T) {
 		require.NoError(t, err)
 
 		// Set up handler that returns different status codes based on pet ID
-		handler.ExpectGetPetById(1).Handle(func(req petstoretest.GetPetByIdRequestObject, w http.ResponseWriter) error {
+		handler.ExpectGetPetById(1).Handle(func(req petstoretest.GetPetByIdRequestObject, w http.ResponseWriter) {
 			if req.PetId == 1 {
 				w.Header().Set("Content-Type", "application/json")
 				w.WriteHeader(200)
-				_, writeErr := w.Write([]byte(`{"id":1,"name":"Found Pet"}`))
-				return writeErr
+				_, err = w.Write([]byte(`{"id":1,"name":"Found Pet"}`))
+				require.NoError(t, err)
 			}
 			w.WriteHeader(404)
-			return nil
 		})
 
 		handler.ExpectGetPetById(999).Handle(func(
 			req petstoretest.GetPetByIdRequestObject,
 			w http.ResponseWriter,
-		) error {
+		) {
 			w.WriteHeader(404)
-			return nil
 		})
 
 		// Call with ID 1 should succeed
@@ -498,25 +495,6 @@ func TestHandleMethod(t *testing.T) {
 		require.Equal(t, 404, resp2.StatusCode())
 	})
 
-	t.Run("handler returning errors", func(t *testing.T) {
-		handler := petstoretest.NewTestHandler(t)
-		server := httptest.NewServer(handler)
-		defer server.Close()
-
-		client, err := oapi.NewClientWithResponses(server.URL)
-		require.NoError(t, err)
-
-		// Handler that returns an error
-		handler.ExpectGetPetById(1).Handle(func(req petstoretest.GetPetByIdRequestObject, w http.ResponseWriter) error {
-			return assert.AnError
-		})
-
-		// The error should result in HTTP 500
-		resp, err := client.GetPetByIdWithResponse(t.Context(), 1)
-		require.NoError(t, err)
-		require.Equal(t, 500, resp.StatusCode())
-	})
-
 	t.Run("handler with request body", func(t *testing.T) {
 		handler := petstoretest.NewTestHandler(t)
 		server := httptest.NewServer(handler)
@@ -529,7 +507,7 @@ func TestHandleMethod(t *testing.T) {
 		handler.ExpectUpdateUser("john", oapi.UpdateUserJSONRequestBody{
 			Id:       ptr(int64(1)),
 			Username: ptr("john"),
-		}).Handle(func(req petstoretest.UpdateUserRequestObject, w http.ResponseWriter) error {
+		}).Handle(func(req petstoretest.UpdateUserRequestObject, w http.ResponseWriter) {
 			// Verify the request contains the expected data
 			require.NotNil(t, req.JSONBody)
 			require.Equal(t, int64(1), *req.JSONBody.Id)
@@ -537,7 +515,6 @@ func TestHandleMethod(t *testing.T) {
 			require.Equal(t, "john", req.Username)
 
 			w.WriteHeader(200)
-			return nil
 		})
 
 		resp, err := client.UpdateUserWithResponse(
@@ -567,7 +544,7 @@ func TestHandleMethod(t *testing.T) {
 		handler.ExpectAddPetWithBody("application/xml", xmlBody).Handle(func(
 			req petstoretest.AddPetRequestObject,
 			w http.ResponseWriter,
-		) error {
+		) {
 			// Verify that the Body field is populated
 			require.NotNil(t, req.Body, "Body should be populated from WithBody")
 
@@ -585,8 +562,8 @@ func TestHandleMethod(t *testing.T) {
 			// Return a custom response
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(201)
-			_, writeErr := w.Write([]byte(`{"id":42,"name":"XML Pet Created"}`))
-			return writeErr
+			_, err = w.Write([]byte(`{"id":42,"name":"XML Pet Created"}`))
+			require.NoError(t, err)
 		})
 
 		// Make request with XML body

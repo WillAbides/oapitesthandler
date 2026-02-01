@@ -36,11 +36,12 @@ type GetProductByIdExpectation struct {
 
 type getProductByIdRawResponder struct {
 	req GetProductByIdRequestObject
-	fn  func(GetProductByIdRequestObject, http.ResponseWriter) error
+	fn  func(GetProductByIdRequestObject, http.ResponseWriter)
 }
 
 func (r getProductByIdRawResponder) VisitGetProductByIdResponse(w http.ResponseWriter) error {
-	return r.fn(r.req, w)
+	r.fn(r.req, w)
+	return nil
 }
 
 // RespondJSON200 sets the expectation to return a 200 response with JSON content.
@@ -56,7 +57,7 @@ func (b *GetProductByIdExpectation) Respond404() {
 }
 
 // Handle sets the expectation to invoke a custom handler function with full control over the HTTP response.
-func (b *GetProductByIdExpectation) Handle(fn func(GetProductByIdRequestObject, http.ResponseWriter) error) {
+func (b *GetProductByIdExpectation) Handle(fn func(GetProductByIdRequestObject, http.ResponseWriter)) {
 	resp := getProductByIdRawResponder{req: b.req, fn: fn}
 	b.handler.getProductByIdExpectResponses.expect(b.handler.tb, b.req, nil, resp, b.opts...)
 }
@@ -69,11 +70,12 @@ type UpdateProductExpectation struct {
 
 type updateProductRawResponder struct {
 	req UpdateProductRequestObject
-	fn  func(UpdateProductRequestObject, http.ResponseWriter) error
+	fn  func(UpdateProductRequestObject, http.ResponseWriter)
 }
 
 func (r updateProductRawResponder) VisitUpdateProductResponse(w http.ResponseWriter) error {
-	return r.fn(r.req, w)
+	r.fn(r.req, w)
+	return nil
 }
 
 // RespondJSON200 sets the expectation to return a 200 response with JSON content.
@@ -89,7 +91,7 @@ func (b *UpdateProductExpectation) Respond404() {
 }
 
 // Handle sets the expectation to invoke a custom handler function with full control over the HTTP response.
-func (b *UpdateProductExpectation) Handle(fn func(UpdateProductRequestObject, http.ResponseWriter) error) {
+func (b *UpdateProductExpectation) Handle(fn func(UpdateProductRequestObject, http.ResponseWriter)) {
 	resp := updateProductRawResponder{req: b.req, fn: fn}
 	b.handler.updateProductExpectResponses.expect(b.handler.tb, b.req, nil, resp, b.opts...)
 }

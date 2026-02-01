@@ -34,11 +34,12 @@ type ListUsersExpectation struct {
 
 type listUsersRawResponder struct {
 	req ListUsersRequestObject
-	fn  func(ListUsersRequestObject, http.ResponseWriter) error
+	fn  func(ListUsersRequestObject, http.ResponseWriter)
 }
 
 func (r listUsersRawResponder) VisitListUsersResponse(w http.ResponseWriter) error {
-	return r.fn(r.req, w)
+	r.fn(r.req, w)
+	return nil
 }
 
 // RespondJSON200 sets the expectation to return a 200 response with JSON content.
@@ -48,7 +49,7 @@ func (b *ListUsersExpectation) RespondJSON200(resp []User) {
 }
 
 // Handle sets the expectation to invoke a custom handler function with full control over the HTTP response.
-func (b *ListUsersExpectation) Handle(fn func(ListUsersRequestObject, http.ResponseWriter) error) {
+func (b *ListUsersExpectation) Handle(fn func(ListUsersRequestObject, http.ResponseWriter)) {
 	resp := listUsersRawResponder{req: b.req, fn: fn}
 	b.handler.listUsersExpectResponses.expect(b.handler.tb, b.req, nil, resp, b.opts...)
 }
@@ -61,11 +62,12 @@ type GetUserByIdExpectation struct {
 
 type getUserByIdRawResponder struct {
 	req GetUserByIdRequestObject
-	fn  func(GetUserByIdRequestObject, http.ResponseWriter) error
+	fn  func(GetUserByIdRequestObject, http.ResponseWriter)
 }
 
 func (r getUserByIdRawResponder) VisitGetUserByIdResponse(w http.ResponseWriter) error {
-	return r.fn(r.req, w)
+	r.fn(r.req, w)
+	return nil
 }
 
 // RespondJSON200 sets the expectation to return a 200 response with JSON content.
@@ -81,7 +83,7 @@ func (b *GetUserByIdExpectation) Respond404() {
 }
 
 // Handle sets the expectation to invoke a custom handler function with full control over the HTTP response.
-func (b *GetUserByIdExpectation) Handle(fn func(GetUserByIdRequestObject, http.ResponseWriter) error) {
+func (b *GetUserByIdExpectation) Handle(fn func(GetUserByIdRequestObject, http.ResponseWriter)) {
 	resp := getUserByIdRawResponder{req: b.req, fn: fn}
 	b.handler.getUserByIdExpectResponses.expect(b.handler.tb, b.req, nil, resp, b.opts...)
 }
