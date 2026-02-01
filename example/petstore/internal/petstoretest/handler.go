@@ -60,11 +60,12 @@ type AddPetExpectation struct {
 
 type addPetRawResponder struct {
 	req AddPetRequestObject
-	fn  func(AddPetRequestObject, http.ResponseWriter) error
+	fn  func(AddPetRequestObject, http.ResponseWriter)
 }
 
 func (r addPetRawResponder) VisitAddPetResponse(w http.ResponseWriter) error {
-	return r.fn(r.req, w)
+	r.fn(r.req, w)
+	return nil
 }
 
 // RespondJSON201 sets the expectation to return a 201 response with JSON content.
@@ -86,7 +87,7 @@ func (b *AddPetExpectation) Respond422() {
 }
 
 // Handle sets the expectation to invoke a custom handler function with full control over the HTTP response.
-func (b *AddPetExpectation) Handle(fn func(AddPetRequestObject, http.ResponseWriter) error) {
+func (b *AddPetExpectation) Handle(fn func(AddPetRequestObject, http.ResponseWriter)) {
 	resp := addPetRawResponder{req: b.req, fn: fn}
 	b.handler.addPetExpectResponses.expect(b.handler.tb, b.req, b.rawBody, resp, b.opts...)
 }
@@ -100,11 +101,12 @@ type UpdatePetExpectation struct {
 
 type updatePetRawResponder struct {
 	req UpdatePetRequestObject
-	fn  func(UpdatePetRequestObject, http.ResponseWriter) error
+	fn  func(UpdatePetRequestObject, http.ResponseWriter)
 }
 
 func (r updatePetRawResponder) VisitUpdatePetResponse(w http.ResponseWriter) error {
-	return r.fn(r.req, w)
+	r.fn(r.req, w)
+	return nil
 }
 
 // RespondJSON200 sets the expectation to return a 200 response with JSON content.
@@ -132,7 +134,7 @@ func (b *UpdatePetExpectation) RespondJSON422(resp modelspkg.Error) {
 }
 
 // Handle sets the expectation to invoke a custom handler function with full control over the HTTP response.
-func (b *UpdatePetExpectation) Handle(fn func(UpdatePetRequestObject, http.ResponseWriter) error) {
+func (b *UpdatePetExpectation) Handle(fn func(UpdatePetRequestObject, http.ResponseWriter)) {
 	resp := updatePetRawResponder{req: b.req, fn: fn}
 	b.handler.updatePetExpectResponses.expect(b.handler.tb, b.req, b.rawBody, resp, b.opts...)
 }
@@ -145,11 +147,12 @@ type FindPetsByStatusExpectation struct {
 
 type findPetsByStatusRawResponder struct {
 	req FindPetsByStatusRequestObject
-	fn  func(FindPetsByStatusRequestObject, http.ResponseWriter) error
+	fn  func(FindPetsByStatusRequestObject, http.ResponseWriter)
 }
 
 func (r findPetsByStatusRawResponder) VisitFindPetsByStatusResponse(w http.ResponseWriter) error {
-	return r.fn(r.req, w)
+	r.fn(r.req, w)
+	return nil
 }
 
 // RespondJSON200 sets the expectation to return a 200 response with JSON content.
@@ -165,7 +168,7 @@ func (b *FindPetsByStatusExpectation) Respond400() {
 }
 
 // Handle sets the expectation to invoke a custom handler function with full control over the HTTP response.
-func (b *FindPetsByStatusExpectation) Handle(fn func(FindPetsByStatusRequestObject, http.ResponseWriter) error) {
+func (b *FindPetsByStatusExpectation) Handle(fn func(FindPetsByStatusRequestObject, http.ResponseWriter)) {
 	resp := findPetsByStatusRawResponder{req: b.req, fn: fn}
 	b.handler.findPetsByStatusExpectResponses.expect(b.handler.tb, b.req, nil, resp, b.opts...)
 }
@@ -178,11 +181,12 @@ type FindPetsByTagsExpectation struct {
 
 type findPetsByTagsRawResponder struct {
 	req FindPetsByTagsRequestObject
-	fn  func(FindPetsByTagsRequestObject, http.ResponseWriter) error
+	fn  func(FindPetsByTagsRequestObject, http.ResponseWriter)
 }
 
 func (r findPetsByTagsRawResponder) VisitFindPetsByTagsResponse(w http.ResponseWriter) error {
-	return r.fn(r.req, w)
+	r.fn(r.req, w)
+	return nil
 }
 
 // RespondJSON200 sets the expectation to return a 200 response with JSON content.
@@ -198,7 +202,7 @@ func (b *FindPetsByTagsExpectation) Respond400() {
 }
 
 // Handle sets the expectation to invoke a custom handler function with full control over the HTTP response.
-func (b *FindPetsByTagsExpectation) Handle(fn func(FindPetsByTagsRequestObject, http.ResponseWriter) error) {
+func (b *FindPetsByTagsExpectation) Handle(fn func(FindPetsByTagsRequestObject, http.ResponseWriter)) {
 	resp := findPetsByTagsRawResponder{req: b.req, fn: fn}
 	b.handler.findPetsByTagsExpectResponses.expect(b.handler.tb, b.req, nil, resp, b.opts...)
 }
@@ -211,11 +215,12 @@ type DeletePetExpectation struct {
 
 type deletePetRawResponder struct {
 	req DeletePetRequestObject
-	fn  func(DeletePetRequestObject, http.ResponseWriter) error
+	fn  func(DeletePetRequestObject, http.ResponseWriter)
 }
 
 func (r deletePetRawResponder) VisitDeletePetResponse(w http.ResponseWriter) error {
-	return r.fn(r.req, w)
+	r.fn(r.req, w)
+	return nil
 }
 
 // RespondJSON200 sets the expectation to return a 200 response with JSON content.
@@ -243,7 +248,7 @@ func (b *DeletePetExpectation) RespondJSON404(resp DeletePet404JSONResponse) {
 }
 
 // Handle sets the expectation to invoke a custom handler function with full control over the HTTP response.
-func (b *DeletePetExpectation) Handle(fn func(DeletePetRequestObject, http.ResponseWriter) error) {
+func (b *DeletePetExpectation) Handle(fn func(DeletePetRequestObject, http.ResponseWriter)) {
 	resp := deletePetRawResponder{req: b.req, fn: fn}
 	b.handler.deletePetExpectResponses.expect(b.handler.tb, b.req, nil, resp, b.opts...)
 }
@@ -256,11 +261,12 @@ type GetPetByIdExpectation struct {
 
 type getPetByIdRawResponder struct {
 	req GetPetByIdRequestObject
-	fn  func(GetPetByIdRequestObject, http.ResponseWriter) error
+	fn  func(GetPetByIdRequestObject, http.ResponseWriter)
 }
 
 func (r getPetByIdRawResponder) VisitGetPetByIdResponse(w http.ResponseWriter) error {
-	return r.fn(r.req, w)
+	r.fn(r.req, w)
+	return nil
 }
 
 // RespondJSON200 sets the expectation to return a 200 response with JSON content.
@@ -288,7 +294,7 @@ func (b *GetPetByIdExpectation) RespondJSON404(resp modelspkg.Error) {
 }
 
 // Handle sets the expectation to invoke a custom handler function with full control over the HTTP response.
-func (b *GetPetByIdExpectation) Handle(fn func(GetPetByIdRequestObject, http.ResponseWriter) error) {
+func (b *GetPetByIdExpectation) Handle(fn func(GetPetByIdRequestObject, http.ResponseWriter)) {
 	resp := getPetByIdRawResponder{req: b.req, fn: fn}
 	b.handler.getPetByIdExpectResponses.expect(b.handler.tb, b.req, nil, resp, b.opts...)
 }
@@ -301,11 +307,12 @@ type UpdatePetWithFormExpectation struct {
 
 type updatePetWithFormRawResponder struct {
 	req UpdatePetWithFormRequestObject
-	fn  func(UpdatePetWithFormRequestObject, http.ResponseWriter) error
+	fn  func(UpdatePetWithFormRequestObject, http.ResponseWriter)
 }
 
 func (r updatePetWithFormRawResponder) VisitUpdatePetWithFormResponse(w http.ResponseWriter) error {
-	return r.fn(r.req, w)
+	r.fn(r.req, w)
+	return nil
 }
 
 // RespondJSON200 sets the expectation to return a 200 response with JSON content.
@@ -321,7 +328,7 @@ func (b *UpdatePetWithFormExpectation) Respond400() {
 }
 
 // Handle sets the expectation to invoke a custom handler function with full control over the HTTP response.
-func (b *UpdatePetWithFormExpectation) Handle(fn func(UpdatePetWithFormRequestObject, http.ResponseWriter) error) {
+func (b *UpdatePetWithFormExpectation) Handle(fn func(UpdatePetWithFormRequestObject, http.ResponseWriter)) {
 	resp := updatePetWithFormRawResponder{req: b.req, fn: fn}
 	b.handler.updatePetWithFormExpectResponses.expect(b.handler.tb, b.req, nil, resp, b.opts...)
 }
@@ -334,11 +341,12 @@ type GetPetMetadataExpectation struct {
 
 type getPetMetadataRawResponder struct {
 	req GetPetMetadataRequestObject
-	fn  func(GetPetMetadataRequestObject, http.ResponseWriter) error
+	fn  func(GetPetMetadataRequestObject, http.ResponseWriter)
 }
 
 func (r getPetMetadataRawResponder) VisitGetPetMetadataResponse(w http.ResponseWriter) error {
-	return r.fn(r.req, w)
+	r.fn(r.req, w)
+	return nil
 }
 
 // RespondJSON200 sets the expectation to return a 200 response with JSON content.
@@ -360,7 +368,7 @@ func (b *GetPetMetadataExpectation) RespondJSON404(resp GetPetMetadata404JSONRes
 }
 
 // Handle sets the expectation to invoke a custom handler function with full control over the HTTP response.
-func (b *GetPetMetadataExpectation) Handle(fn func(GetPetMetadataRequestObject, http.ResponseWriter) error) {
+func (b *GetPetMetadataExpectation) Handle(fn func(GetPetMetadataRequestObject, http.ResponseWriter)) {
 	resp := getPetMetadataRawResponder{req: b.req, fn: fn}
 	b.handler.getPetMetadataExpectResponses.expect(b.handler.tb, b.req, nil, resp, b.opts...)
 }
@@ -373,11 +381,12 @@ type GetPetPhotoByIdExpectation struct {
 
 type getPetPhotoByIdRawResponder struct {
 	req GetPetPhotoByIdRequestObject
-	fn  func(GetPetPhotoByIdRequestObject, http.ResponseWriter) error
+	fn  func(GetPetPhotoByIdRequestObject, http.ResponseWriter)
 }
 
 func (r getPetPhotoByIdRawResponder) VisitGetPetPhotoByIdResponse(w http.ResponseWriter) error {
-	return r.fn(r.req, w)
+	r.fn(r.req, w)
+	return nil
 }
 
 // RespondJSON200 sets the expectation to return a 200 response with JSON content.
@@ -393,7 +402,7 @@ func (b *GetPetPhotoByIdExpectation) RespondJSON404(resp GetPetPhotoById404JSONR
 }
 
 // Handle sets the expectation to invoke a custom handler function with full control over the HTTP response.
-func (b *GetPetPhotoByIdExpectation) Handle(fn func(GetPetPhotoByIdRequestObject, http.ResponseWriter) error) {
+func (b *GetPetPhotoByIdExpectation) Handle(fn func(GetPetPhotoByIdRequestObject, http.ResponseWriter)) {
 	resp := getPetPhotoByIdRawResponder{req: b.req, fn: fn}
 	b.handler.getPetPhotoByIdExpectResponses.expect(b.handler.tb, b.req, nil, resp, b.opts...)
 }
@@ -406,11 +415,12 @@ type GetPetRegistrationExpectation struct {
 
 type getPetRegistrationRawResponder struct {
 	req GetPetRegistrationRequestObject
-	fn  func(GetPetRegistrationRequestObject, http.ResponseWriter) error
+	fn  func(GetPetRegistrationRequestObject, http.ResponseWriter)
 }
 
 func (r getPetRegistrationRawResponder) VisitGetPetRegistrationResponse(w http.ResponseWriter) error {
-	return r.fn(r.req, w)
+	r.fn(r.req, w)
+	return nil
 }
 
 // RespondJSON200 sets the expectation to return a 200 response with JSON content.
@@ -426,7 +436,7 @@ func (b *GetPetRegistrationExpectation) RespondJSON404(resp modelspkg.Error) {
 }
 
 // Handle sets the expectation to invoke a custom handler function with full control over the HTTP response.
-func (b *GetPetRegistrationExpectation) Handle(fn func(GetPetRegistrationRequestObject, http.ResponseWriter) error) {
+func (b *GetPetRegistrationExpectation) Handle(fn func(GetPetRegistrationRequestObject, http.ResponseWriter)) {
 	resp := getPetRegistrationRawResponder{req: b.req, fn: fn}
 	b.handler.getPetRegistrationExpectResponses.expect(b.handler.tb, b.req, nil, resp, b.opts...)
 }
@@ -440,11 +450,12 @@ type UploadFileExpectation struct {
 
 type uploadFileRawResponder struct {
 	req UploadFileRequestObject
-	fn  func(UploadFileRequestObject, http.ResponseWriter) error
+	fn  func(UploadFileRequestObject, http.ResponseWriter)
 }
 
 func (r uploadFileRawResponder) VisitUploadFileResponse(w http.ResponseWriter) error {
-	return r.fn(r.req, w)
+	r.fn(r.req, w)
+	return nil
 }
 
 // RespondJSON200 sets the expectation to return a 200 response with JSON content.
@@ -466,7 +477,7 @@ func (b *UploadFileExpectation) Respond404() {
 }
 
 // Handle sets the expectation to invoke a custom handler function with full control over the HTTP response.
-func (b *UploadFileExpectation) Handle(fn func(UploadFileRequestObject, http.ResponseWriter) error) {
+func (b *UploadFileExpectation) Handle(fn func(UploadFileRequestObject, http.ResponseWriter)) {
 	resp := uploadFileRawResponder{req: b.req, fn: fn}
 	b.handler.uploadFileExpectResponses.expect(b.handler.tb, b.req, b.rawBody, resp, b.opts...)
 }
@@ -479,11 +490,12 @@ type GetStoreInventoryExpectation struct {
 
 type getStoreInventoryRawResponder struct {
 	req GetStoreInventoryRequestObject
-	fn  func(GetStoreInventoryRequestObject, http.ResponseWriter) error
+	fn  func(GetStoreInventoryRequestObject, http.ResponseWriter)
 }
 
 func (r getStoreInventoryRawResponder) VisitGetStoreInventoryResponse(w http.ResponseWriter) error {
-	return r.fn(r.req, w)
+	r.fn(r.req, w)
+	return nil
 }
 
 // RespondJSON200 sets the expectation to return a 200 response with JSON content.
@@ -493,7 +505,7 @@ func (b *GetStoreInventoryExpectation) RespondJSON200(resp map[string]int32) {
 }
 
 // Handle sets the expectation to invoke a custom handler function with full control over the HTTP response.
-func (b *GetStoreInventoryExpectation) Handle(fn func(GetStoreInventoryRequestObject, http.ResponseWriter) error) {
+func (b *GetStoreInventoryExpectation) Handle(fn func(GetStoreInventoryRequestObject, http.ResponseWriter)) {
 	resp := getStoreInventoryRawResponder{req: b.req, fn: fn}
 	b.handler.getStoreInventoryExpectResponses.expect(b.handler.tb, b.req, nil, resp, b.opts...)
 }
@@ -507,11 +519,12 @@ type PostStoreOrderExpectation struct {
 
 type postStoreOrderRawResponder struct {
 	req PostStoreOrderRequestObject
-	fn  func(PostStoreOrderRequestObject, http.ResponseWriter) error
+	fn  func(PostStoreOrderRequestObject, http.ResponseWriter)
 }
 
 func (r postStoreOrderRawResponder) VisitPostStoreOrderResponse(w http.ResponseWriter) error {
-	return r.fn(r.req, w)
+	r.fn(r.req, w)
+	return nil
 }
 
 // RespondJSON200 sets the expectation to return a 200 response with JSON content.
@@ -533,7 +546,7 @@ func (b *PostStoreOrderExpectation) Respond422() {
 }
 
 // Handle sets the expectation to invoke a custom handler function with full control over the HTTP response.
-func (b *PostStoreOrderExpectation) Handle(fn func(PostStoreOrderRequestObject, http.ResponseWriter) error) {
+func (b *PostStoreOrderExpectation) Handle(fn func(PostStoreOrderRequestObject, http.ResponseWriter)) {
 	resp := postStoreOrderRawResponder{req: b.req, fn: fn}
 	b.handler.postStoreOrderExpectResponses.expect(b.handler.tb, b.req, b.rawBody, resp, b.opts...)
 }
@@ -546,11 +559,12 @@ type DeleteOrderExpectation struct {
 
 type deleteOrderRawResponder struct {
 	req DeleteOrderRequestObject
-	fn  func(DeleteOrderRequestObject, http.ResponseWriter) error
+	fn  func(DeleteOrderRequestObject, http.ResponseWriter)
 }
 
 func (r deleteOrderRawResponder) VisitDeleteOrderResponse(w http.ResponseWriter) error {
-	return r.fn(r.req, w)
+	r.fn(r.req, w)
+	return nil
 }
 
 // Respond200 sets the expectation to return a 200 response.
@@ -572,7 +586,7 @@ func (b *DeleteOrderExpectation) Respond404() {
 }
 
 // Handle sets the expectation to invoke a custom handler function with full control over the HTTP response.
-func (b *DeleteOrderExpectation) Handle(fn func(DeleteOrderRequestObject, http.ResponseWriter) error) {
+func (b *DeleteOrderExpectation) Handle(fn func(DeleteOrderRequestObject, http.ResponseWriter)) {
 	resp := deleteOrderRawResponder{req: b.req, fn: fn}
 	b.handler.deleteOrderExpectResponses.expect(b.handler.tb, b.req, nil, resp, b.opts...)
 }
@@ -585,11 +599,12 @@ type GetOrderByIdExpectation struct {
 
 type getOrderByIdRawResponder struct {
 	req GetOrderByIdRequestObject
-	fn  func(GetOrderByIdRequestObject, http.ResponseWriter) error
+	fn  func(GetOrderByIdRequestObject, http.ResponseWriter)
 }
 
 func (r getOrderByIdRawResponder) VisitGetOrderByIdResponse(w http.ResponseWriter) error {
-	return r.fn(r.req, w)
+	r.fn(r.req, w)
+	return nil
 }
 
 // RespondJSON200 sets the expectation to return a 200 response with JSON content.
@@ -611,7 +626,7 @@ func (b *GetOrderByIdExpectation) Respond404() {
 }
 
 // Handle sets the expectation to invoke a custom handler function with full control over the HTTP response.
-func (b *GetOrderByIdExpectation) Handle(fn func(GetOrderByIdRequestObject, http.ResponseWriter) error) {
+func (b *GetOrderByIdExpectation) Handle(fn func(GetOrderByIdRequestObject, http.ResponseWriter)) {
 	resp := getOrderByIdRawResponder{req: b.req, fn: fn}
 	b.handler.getOrderByIdExpectResponses.expect(b.handler.tb, b.req, nil, resp, b.opts...)
 }
@@ -625,11 +640,12 @@ type CreateUserExpectation struct {
 
 type createUserRawResponder struct {
 	req CreateUserRequestObject
-	fn  func(CreateUserRequestObject, http.ResponseWriter) error
+	fn  func(CreateUserRequestObject, http.ResponseWriter)
 }
 
 func (r createUserRawResponder) VisitCreateUserResponse(w http.ResponseWriter) error {
-	return r.fn(r.req, w)
+	r.fn(r.req, w)
+	return nil
 }
 
 // RespondJSON200 sets the expectation to return a 200 response with JSON content.
@@ -639,7 +655,7 @@ func (b *CreateUserExpectation) RespondJSON200(resp externalRef0.User) {
 }
 
 // Handle sets the expectation to invoke a custom handler function with full control over the HTTP response.
-func (b *CreateUserExpectation) Handle(fn func(CreateUserRequestObject, http.ResponseWriter) error) {
+func (b *CreateUserExpectation) Handle(fn func(CreateUserRequestObject, http.ResponseWriter)) {
 	resp := createUserRawResponder{req: b.req, fn: fn}
 	b.handler.createUserExpectResponses.expect(b.handler.tb, b.req, b.rawBody, resp, b.opts...)
 }
@@ -652,11 +668,12 @@ type CreateUsersWithListInputExpectation struct {
 
 type createUsersWithListInputRawResponder struct {
 	req CreateUsersWithListInputRequestObject
-	fn  func(CreateUsersWithListInputRequestObject, http.ResponseWriter) error
+	fn  func(CreateUsersWithListInputRequestObject, http.ResponseWriter)
 }
 
 func (r createUsersWithListInputRawResponder) VisitCreateUsersWithListInputResponse(w http.ResponseWriter) error {
-	return r.fn(r.req, w)
+	r.fn(r.req, w)
+	return nil
 }
 
 // RespondJSON200 sets the expectation to return a 200 response with JSON content.
@@ -666,7 +683,7 @@ func (b *CreateUsersWithListInputExpectation) RespondJSON200(resp externalRef0.U
 }
 
 // Handle sets the expectation to invoke a custom handler function with full control over the HTTP response.
-func (b *CreateUsersWithListInputExpectation) Handle(fn func(CreateUsersWithListInputRequestObject, http.ResponseWriter) error) {
+func (b *CreateUsersWithListInputExpectation) Handle(fn func(CreateUsersWithListInputRequestObject, http.ResponseWriter)) {
 	resp := createUsersWithListInputRawResponder{req: b.req, fn: fn}
 	b.handler.createUsersWithListInputExpectResponses.expect(b.handler.tb, b.req, nil, resp, b.opts...)
 }
@@ -679,11 +696,12 @@ type LoginUserExpectation struct {
 
 type loginUserRawResponder struct {
 	req LoginUserRequestObject
-	fn  func(LoginUserRequestObject, http.ResponseWriter) error
+	fn  func(LoginUserRequestObject, http.ResponseWriter)
 }
 
 func (r loginUserRawResponder) VisitLoginUserResponse(w http.ResponseWriter) error {
-	return r.fn(r.req, w)
+	r.fn(r.req, w)
+	return nil
 }
 
 // RespondJSON200 sets the expectation to return a 200 response with JSON content.
@@ -699,7 +717,7 @@ func (b *LoginUserExpectation) Respond400() {
 }
 
 // Handle sets the expectation to invoke a custom handler function with full control over the HTTP response.
-func (b *LoginUserExpectation) Handle(fn func(LoginUserRequestObject, http.ResponseWriter) error) {
+func (b *LoginUserExpectation) Handle(fn func(LoginUserRequestObject, http.ResponseWriter)) {
 	resp := loginUserRawResponder{req: b.req, fn: fn}
 	b.handler.loginUserExpectResponses.expect(b.handler.tb, b.req, nil, resp, b.opts...)
 }
@@ -712,11 +730,12 @@ type LogoutUserExpectation struct {
 
 type logoutUserRawResponder struct {
 	req LogoutUserRequestObject
-	fn  func(LogoutUserRequestObject, http.ResponseWriter) error
+	fn  func(LogoutUserRequestObject, http.ResponseWriter)
 }
 
 func (r logoutUserRawResponder) VisitLogoutUserResponse(w http.ResponseWriter) error {
-	return r.fn(r.req, w)
+	r.fn(r.req, w)
+	return nil
 }
 
 // Respond200 sets the expectation to return a 200 response.
@@ -726,7 +745,7 @@ func (b *LogoutUserExpectation) Respond200() {
 }
 
 // Handle sets the expectation to invoke a custom handler function with full control over the HTTP response.
-func (b *LogoutUserExpectation) Handle(fn func(LogoutUserRequestObject, http.ResponseWriter) error) {
+func (b *LogoutUserExpectation) Handle(fn func(LogoutUserRequestObject, http.ResponseWriter)) {
 	resp := logoutUserRawResponder{req: b.req, fn: fn}
 	b.handler.logoutUserExpectResponses.expect(b.handler.tb, b.req, nil, resp, b.opts...)
 }
@@ -739,11 +758,12 @@ type DeleteUserExpectation struct {
 
 type deleteUserRawResponder struct {
 	req DeleteUserRequestObject
-	fn  func(DeleteUserRequestObject, http.ResponseWriter) error
+	fn  func(DeleteUserRequestObject, http.ResponseWriter)
 }
 
 func (r deleteUserRawResponder) VisitDeleteUserResponse(w http.ResponseWriter) error {
-	return r.fn(r.req, w)
+	r.fn(r.req, w)
+	return nil
 }
 
 // Respond200 sets the expectation to return a 200 response.
@@ -765,7 +785,7 @@ func (b *DeleteUserExpectation) Respond404() {
 }
 
 // Handle sets the expectation to invoke a custom handler function with full control over the HTTP response.
-func (b *DeleteUserExpectation) Handle(fn func(DeleteUserRequestObject, http.ResponseWriter) error) {
+func (b *DeleteUserExpectation) Handle(fn func(DeleteUserRequestObject, http.ResponseWriter)) {
 	resp := deleteUserRawResponder{req: b.req, fn: fn}
 	b.handler.deleteUserExpectResponses.expect(b.handler.tb, b.req, nil, resp, b.opts...)
 }
@@ -778,11 +798,12 @@ type GetUserByNameExpectation struct {
 
 type getUserByNameRawResponder struct {
 	req GetUserByNameRequestObject
-	fn  func(GetUserByNameRequestObject, http.ResponseWriter) error
+	fn  func(GetUserByNameRequestObject, http.ResponseWriter)
 }
 
 func (r getUserByNameRawResponder) VisitGetUserByNameResponse(w http.ResponseWriter) error {
-	return r.fn(r.req, w)
+	r.fn(r.req, w)
+	return nil
 }
 
 // RespondJSON200 sets the expectation to return a 200 response with JSON content.
@@ -804,7 +825,7 @@ func (b *GetUserByNameExpectation) Respond404() {
 }
 
 // Handle sets the expectation to invoke a custom handler function with full control over the HTTP response.
-func (b *GetUserByNameExpectation) Handle(fn func(GetUserByNameRequestObject, http.ResponseWriter) error) {
+func (b *GetUserByNameExpectation) Handle(fn func(GetUserByNameRequestObject, http.ResponseWriter)) {
 	resp := getUserByNameRawResponder{req: b.req, fn: fn}
 	b.handler.getUserByNameExpectResponses.expect(b.handler.tb, b.req, nil, resp, b.opts...)
 }
@@ -818,11 +839,12 @@ type UpdateUserExpectation struct {
 
 type updateUserRawResponder struct {
 	req UpdateUserRequestObject
-	fn  func(UpdateUserRequestObject, http.ResponseWriter) error
+	fn  func(UpdateUserRequestObject, http.ResponseWriter)
 }
 
 func (r updateUserRawResponder) VisitUpdateUserResponse(w http.ResponseWriter) error {
-	return r.fn(r.req, w)
+	r.fn(r.req, w)
+	return nil
 }
 
 // Respond200 sets the expectation to return a 200 response.
@@ -844,7 +866,7 @@ func (b *UpdateUserExpectation) Respond404() {
 }
 
 // Handle sets the expectation to invoke a custom handler function with full control over the HTTP response.
-func (b *UpdateUserExpectation) Handle(fn func(UpdateUserRequestObject, http.ResponseWriter) error) {
+func (b *UpdateUserExpectation) Handle(fn func(UpdateUserRequestObject, http.ResponseWriter)) {
 	resp := updateUserRawResponder{req: b.req, fn: fn}
 	b.handler.updateUserExpectResponses.expect(b.handler.tb, b.req, b.rawBody, resp, b.opts...)
 }

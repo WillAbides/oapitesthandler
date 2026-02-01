@@ -33,11 +33,12 @@ type GetUserExpectation struct {
 
 type getUserRawResponder struct {
 	req GetUserRequestObject
-	fn  func(GetUserRequestObject, http.ResponseWriter) error
+	fn  func(GetUserRequestObject, http.ResponseWriter)
 }
 
 func (r getUserRawResponder) VisitGetUserResponse(w http.ResponseWriter) error {
-	return r.fn(r.req, w)
+	r.fn(r.req, w)
+	return nil
 }
 
 // RespondJSON200 sets the expectation to return a 200 response with JSON content.
@@ -53,7 +54,7 @@ func (b *GetUserExpectation) Respond404() {
 }
 
 // Handle sets the expectation to invoke a custom handler function with full control over the HTTP response.
-func (b *GetUserExpectation) Handle(fn func(GetUserRequestObject, http.ResponseWriter) error) {
+func (b *GetUserExpectation) Handle(fn func(GetUserRequestObject, http.ResponseWriter)) {
 	resp := getUserRawResponder{req: b.req, fn: fn}
 	b.handler.getUserExpectResponses.expect(b.handler.tb, b.req, nil, resp, b.opts...)
 }

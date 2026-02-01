@@ -112,13 +112,16 @@ handler.ExpectGetPetById(1, petstoretest.MinTimes(0)).RespondJSON200(response)
 Use `Handle()` for responses that aren't described in your OpenAPI spec:
 
 ```go
-handler.ExpectGetPetById(1).Handle(func(req petstoretest.GetPetByIdRequestObject, w http.ResponseWriter) error {
+handler.ExpectGetPetById(1).Handle(func(req petstoretest.GetPetByIdRequestObject, w http.ResponseWriter) {
     w.Header().Set("X-Custom-Header", "value")
     w.WriteHeader(200)
-    return json.NewEncoder(w).Encode(map[string]any{
+    err := json.NewEncoder(w).Encode(map[string]any{
         "id":   req.PetId,
         "name": fmt.Sprintf("Pet-%d", req.PetId),
     })
+    if err != nil {
+        t.Errorf("failed to write response: %v", err)
+    }
 })
 ```
 

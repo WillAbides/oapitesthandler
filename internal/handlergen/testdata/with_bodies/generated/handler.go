@@ -35,11 +35,12 @@ type CreateUserExpectation struct {
 
 type createUserRawResponder struct {
 	req CreateUserRequestObject
-	fn  func(CreateUserRequestObject, http.ResponseWriter) error
+	fn  func(CreateUserRequestObject, http.ResponseWriter)
 }
 
 func (r createUserRawResponder) VisitCreateUserResponse(w http.ResponseWriter) error {
-	return r.fn(r.req, w)
+	r.fn(r.req, w)
+	return nil
 }
 
 // RespondJSON201 sets the expectation to return a 201 response with JSON content.
@@ -55,7 +56,7 @@ func (b *CreateUserExpectation) Respond400() {
 }
 
 // Handle sets the expectation to invoke a custom handler function with full control over the HTTP response.
-func (b *CreateUserExpectation) Handle(fn func(CreateUserRequestObject, http.ResponseWriter) error) {
+func (b *CreateUserExpectation) Handle(fn func(CreateUserRequestObject, http.ResponseWriter)) {
 	resp := createUserRawResponder{req: b.req, fn: fn}
 	b.handler.createUserExpectResponses.expect(b.handler.tb, b.req, nil, resp, b.opts...)
 }
@@ -68,11 +69,12 @@ type DeleteUserExpectation struct {
 
 type deleteUserRawResponder struct {
 	req DeleteUserRequestObject
-	fn  func(DeleteUserRequestObject, http.ResponseWriter) error
+	fn  func(DeleteUserRequestObject, http.ResponseWriter)
 }
 
 func (r deleteUserRawResponder) VisitDeleteUserResponse(w http.ResponseWriter) error {
-	return r.fn(r.req, w)
+	r.fn(r.req, w)
+	return nil
 }
 
 // Respond204 sets the expectation to return a 204 response.
@@ -88,7 +90,7 @@ func (b *DeleteUserExpectation) Respond404() {
 }
 
 // Handle sets the expectation to invoke a custom handler function with full control over the HTTP response.
-func (b *DeleteUserExpectation) Handle(fn func(DeleteUserRequestObject, http.ResponseWriter) error) {
+func (b *DeleteUserExpectation) Handle(fn func(DeleteUserRequestObject, http.ResponseWriter)) {
 	resp := deleteUserRawResponder{req: b.req, fn: fn}
 	b.handler.deleteUserExpectResponses.expect(b.handler.tb, b.req, nil, resp, b.opts...)
 }
@@ -101,11 +103,12 @@ type UpdateUserExpectation struct {
 
 type updateUserRawResponder struct {
 	req UpdateUserRequestObject
-	fn  func(UpdateUserRequestObject, http.ResponseWriter) error
+	fn  func(UpdateUserRequestObject, http.ResponseWriter)
 }
 
 func (r updateUserRawResponder) VisitUpdateUserResponse(w http.ResponseWriter) error {
-	return r.fn(r.req, w)
+	r.fn(r.req, w)
+	return nil
 }
 
 // RespondJSON200 sets the expectation to return a 200 response with JSON content.
@@ -121,7 +124,7 @@ func (b *UpdateUserExpectation) Respond404() {
 }
 
 // Handle sets the expectation to invoke a custom handler function with full control over the HTTP response.
-func (b *UpdateUserExpectation) Handle(fn func(UpdateUserRequestObject, http.ResponseWriter) error) {
+func (b *UpdateUserExpectation) Handle(fn func(UpdateUserRequestObject, http.ResponseWriter)) {
 	resp := updateUserRawResponder{req: b.req, fn: fn}
 	b.handler.updateUserExpectResponses.expect(b.handler.tb, b.req, nil, resp, b.opts...)
 }
